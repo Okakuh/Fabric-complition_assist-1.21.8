@@ -4,7 +4,8 @@
   "package": "net.okakuh.complition_assist.mixin",
   "compatibilityLevel": "JAVA_21",
   "client": [
-    "KeyboardMixin"
+    "KeyboardMixin",
+    "ScreenMixin"
   ],
   "injectors": {
     "defaultRequire": 1

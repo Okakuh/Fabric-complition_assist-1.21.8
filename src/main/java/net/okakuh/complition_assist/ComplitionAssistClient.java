@@ -2,14 +2,20 @@ package net.okakuh.complition_assist;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.Keyboard;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.widget.TextFieldWidget;
+import org.joml.Vector2i;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class ComplitionAssistClient implements ClientModInitializer {
@@ -22,6 +28,8 @@ public class ComplitionAssistClient implements ClientModInitializer {
     // Состояние отслеживания
     private static boolean isTracking = false;
     private static StringBuilder currentSequence = new StringBuilder();
+
+    private static List<String> currentSuggestions = new ArrayList<>();
 
     // Для отслеживания двоеточия
     private static boolean colonDetected = false;
@@ -43,11 +51,24 @@ public class ComplitionAssistClient implements ClientModInitializer {
     public void onInitializeClient() {
         LOGGER.info("✅✅✅ COMPLITION ASSIST MOD INITIALIZED ✅✅✅");
 
+        // Загрузка конфигурации
         initializeShortcuts();
 
-        // Регистрация обработчика тиков
-        ClientTickEvents.END_CLIENT_TICK.register(this::onClientTick);
+        // ВАЖНО: Регистрация HudRenderCallback ДО других обработчиков
+        LOGGER.info("Registering HudRenderCallback...");
 
+        HudRenderCallback.EVENT.register((drawContext, tickCounter) -> {
+            if (isTracking && !currentSuggestions.isEmpty()) {
+                InputFieldTracker.update();
+                if (InputFieldTracker.hasActiveField()) {
+                    Vector2i pos = InputFieldTracker.getFieldPosition();
+                    renderSuggestionsHud(drawContext, pos.x, pos.y);
+                }
+            }
+        });
+
+        // Регистрация других обработчиков
+        ClientTickEvents.END_CLIENT_TICK.register(client -> onClientTick(client));
         LOGGER.info("Handlers registered");
     }
 
@@ -95,20 +116,28 @@ public class ComplitionAssistClient implements ClientModInitializer {
 
         // Логируем только каждые 200 тиков
         if (tickCount % 200 == 0) {
-            LOGGER.debug("Tick #{}", tickCount);
+            LOGGER.info("Tick #{}", tickCount);
+        }
+
+        if (isTracking) {
+            // Обновляем активное поле
+            InputFieldTracker.update();
+
+            // Получаем предложения
+            currentSuggestions = getSuggestions(currentSequence.toString());
         }
     }
 
     // Этот метод нужно будет вызывать из Mixin при вводе символов
     public static void onCharTyped(char character) {
-        LOGGER.debug("Символ введен: '{}' (код: {})", character, (int) character);
+        LOGGER.info("Символ введен: '{}' (код: {})", character, (int) character);
 
         // Проверяем двоеточие
         if (character == ':') {
             // Сбрасываем предыдущую строку и начинаем запись заново
             resetTracking();
             colonDetected = true;
-            LOGGER.debug("Обнаружено двоеточие! Сбрасываем и начинаем новую последовательность.");
+            LOGGER.info("Обнаружено двоеточие! Сбрасываем и начинаем новую последовательность.");
             return;
         }
 
@@ -130,7 +159,7 @@ public class ComplitionAssistClient implements ClientModInitializer {
     // Этот метод нужно будет вызывать из Mixin при нажатии специальных клавиш
     // Этот метод нужно будет вызывать из Mixin при нажатии специальных клавиш
     public static void onKeyPressed(int keyCode, int modifiers) {
-        LOGGER.debug("Клавиша нажата: код {}, модификаторы: {}", keyCode, modifiers);
+        LOGGER.info("Клавиша нажата: код {}, модификаторы: {}", keyCode, modifiers);
 
         // Проверяем Shift+Пробел (Shift = 1, Пробел = 32)
         boolean shiftPressed = (modifiers & 1) != 0; // GLFW.GLFW_MOD_SHIFT = 1
@@ -292,18 +321,119 @@ public class ComplitionAssistClient implements ClientModInitializer {
         }
     }
 
-    // API методы
     public static void addShortcut(String shortcut, String replacement) {
         SHORTCUTS.put(shortcut.toLowerCase(), replacement);
         LOGGER.info("Добавлено сокращение: {} -> {}", shortcut, replacement);
     }
 
-    public static void removeShortcut(String shortcut) {
-        SHORTCUTS.remove(shortcut.toLowerCase());
-        LOGGER.info("Удалено сокращение: {}", shortcut);
-    }
-
     public static Map<String, String> getShortcuts() {
         return new HashMap<>(SHORTCUTS);
+    }
+
+    private static List<String> getSuggestions(String input) {
+        LOGGER.info("Getting suggestions for input: '{}'", input);
+
+        List<String> suggestions = new ArrayList<>();
+        String inputLower = input.toLowerCase();
+
+        for (String shortcut : SHORTCUTS.keySet()) {
+            if (shortcut.toLowerCase().startsWith(inputLower)) {
+                suggestions.add(shortcut);
+            }
+        }
+
+        suggestions.sort(String::compareToIgnoreCase);
+        if (suggestions.size() > 5) {
+            suggestions = suggestions.subList(0, 5);
+        }
+
+        LOGGER.info("Found {} suggestions: {}", suggestions.size(), suggestions);
+        return suggestions;
+    }
+
+    // Геттер для значения сокращения
+    public static String getShortcutValue(String shortcut) {
+        return SHORTCUTS.get(shortcut.toLowerCase());
+    }
+
+    public static void renderSuggestionsHud(DrawContext context, int x, int y) {
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client == null || client.textRenderer == null) return;
+
+        if (currentSuggestions == null || currentSuggestions.isEmpty()) {
+            return;
+        }
+
+        net.minecraft.client.font.TextRenderer textRenderer = client.textRenderer;
+
+        // ТЕСТ: нарисовать большой красный текст в центре экрана
+        int screenWidth = client.getWindow().getScaledWidth();
+        int screenHeight = client.getWindow().getScaledHeight();
+        context.drawText(textRenderer, "ТЕСТ ТЕКСТА",
+                screenWidth/2 - 50, screenHeight/2, 0xFF0000, true);
+
+        // Остальной код...
+
+        // Получаем активное поле
+        TextFieldWidget activeField = InputFieldTracker.getActiveField();
+        if (activeField == null) return;
+
+        int fieldX = activeField.getX();
+        int fieldY = activeField.getY();
+        int fieldHeight = activeField.getHeight();
+
+        // Всегда показываем НАД полем
+        int suggestionCount = currentSuggestions.size();
+        int lineHeight = 12;
+        int totalHeight = suggestionCount * lineHeight;
+        int padding = 5;
+
+        int startY = fieldY - totalHeight - padding;
+
+        // Если не хватает места сверху, показываем под полем
+        if (startY < 5) {
+            startY = fieldY + fieldHeight + padding;
+        }
+
+        // Собираем текст для отображения
+        List<String> displayTexts = new ArrayList<>();
+        int maxWidth = 0;
+
+        for (String suggestion : currentSuggestions) {
+            String fullText = getShortcutValue(suggestion);
+            if (fullText == null) continue;
+            String displayText = suggestion + " → " + fullText;
+            displayTexts.add(displayText);
+            maxWidth = Math.max(maxWidth, textRenderer.getWidth(displayText));
+        }
+
+        if (maxWidth == 0) return;
+
+        // Рисуем фон
+        int bgX1 = fieldX - 4;
+        int bgY1 = startY - 2;
+        int bgX2 = fieldX + maxWidth + 6;
+        int bgY2 = startY + totalHeight + 2;
+
+        context.fill(bgX1, bgY1, bgX2, bgY2, 0x80000000);
+        context.drawBorder(bgX1, bgY1, maxWidth + 8, totalHeight + 4, 0xFFFFFFFF);
+
+        // Рисуем текст С ОБВОДКОЙ для максимальной видимости
+        int textY = startY;
+        for (String displayText : displayTexts) {
+            // 1. Черная обводка (4 стороны)
+            context.drawText(textRenderer, displayText, fieldX - 1, textY, 0xFF000000, false);
+            context.drawText(textRenderer, displayText, fieldX + 1, textY, 0xFF000000, false);
+            context.drawText(textRenderer, displayText, fieldX, textY - 1, 0xFF000000, false);
+            context.drawText(textRenderer, displayText, fieldX, textY + 1, 0xFF000000, false);
+
+            // 2. Яркий текст поверх
+            context.drawText(textRenderer, displayText, fieldX, textY, 0xFFFFFF00, false); // Желтый
+
+            // 3. Добавляем лог
+            ComplitionAssistClient.LOGGER.info("🎨 Рисую: '{}' на {},{}", displayText, fieldX, textY);
+
+            textY += lineHeight;
+        }
     }
 }
