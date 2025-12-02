@@ -13,10 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ComplitionAssistClient implements ClientModInitializer {
     public static final String MOD_ID = "complition_assist";
@@ -288,25 +285,50 @@ public class ComplitionAssistClient implements ClientModInitializer {
     }
 
     private static List<String> getSuggestions(String input) {
-        List<String> suggestions = new ArrayList<>();
-        String inputLower = input.toLowerCase();
+        Set<String> startsWith = new LinkedHashSet<>();
+        Set<String> containsOnly = new LinkedHashSet<>();
 
         if (input.isEmpty()) {
-            return suggestions;
+            return new ArrayList<>();
         }
 
+        String inputLower = input.toLowerCase();
+
+        // Один проход по всем сокращениям
         for (String shortcut : SHORTCUTS.keySet()) {
-            if (shortcut.toLowerCase().startsWith(inputLower)) {
-                suggestions.add(shortcut);
+            String shortcutLower = shortcut.toLowerCase();
+
+            if (shortcutLower.startsWith(inputLower)) {
+                startsWith.add(shortcut);
+            } else if (shortcutLower.contains(inputLower)) {
+                containsOnly.add(shortcut);
             }
         }
 
-        suggestions.sort(String::compareToIgnoreCase);
-        if (suggestions.size() > 5) {
-            suggestions = suggestions.subList(0, 5);
+        // Объединяем: сначала startsWith, потом containsOnly
+        List<String> result = new ArrayList<>();
+        result.addAll(startsWith);
+        result.addAll(containsOnly);
+
+        // Сортируем внутри каждой группы
+        List<String> sortedResult = new ArrayList<>();
+
+        // Сортируем первую группу (startsWith)
+        List<String> sortedStartsWith = new ArrayList<>(startsWith);
+        sortedStartsWith.sort(String::compareToIgnoreCase);
+        sortedResult.addAll(sortedStartsWith);
+
+        // Сортируем вторую группу (containsOnly)
+        List<String> sortedContainsOnly = new ArrayList<>(containsOnly);
+        sortedContainsOnly.sort(String::compareToIgnoreCase);
+        sortedResult.addAll(sortedContainsOnly);
+
+        // Ограничиваем количество
+        if (sortedResult.size() > 10) {
+            return sortedResult.subList(0, 10);
         }
 
-        return suggestions;
+        return sortedResult;
     }
 
     // Геттер для значения сокращения
