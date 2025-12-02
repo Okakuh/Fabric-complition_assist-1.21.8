@@ -23,7 +23,6 @@ public class ComplitionAssistClient implements ClientModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     private static final Map<String, String> SHORTCUTS = new HashMap<>();
-    private static int tickCount = 0;
 
     // Состояние отслеживания
     private static boolean isTracking = false;
@@ -49,13 +48,8 @@ public class ComplitionAssistClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        LOGGER.info("✅✅✅ COMPLITION ASSIST MOD INITIALIZED ✅✅✅");
-
         // Загрузка конфигурации
         initializeShortcuts();
-
-        // ВАЖНО: Регистрация HudRenderCallback ДО других обработчиков
-        LOGGER.info("Registering HudRenderCallback...");
 
         HudRenderCallback.EVENT.register((drawContext, tickCounter) -> {
             if (isTracking && !currentSuggestions.isEmpty()) {
@@ -69,7 +63,6 @@ public class ComplitionAssistClient implements ClientModInitializer {
 
         // Регистрация других обработчиков
         ClientTickEvents.END_CLIENT_TICK.register(client -> onClientTick(client));
-        LOGGER.info("Handlers registered");
     }
 
     private void initializeShortcuts() {
@@ -92,19 +85,14 @@ public class ComplitionAssistClient implements ClientModInitializer {
         SHORTCUTS.put("brb", "Be right back!");
         SHORTCUTS.put("afk", "Away from keyboard");
         SHORTCUTS.put("test", "Это тестовая замена!");
-
-        LOGGER.info("Loaded {} shortcuts", SHORTCUTS.size());
     }
 
     private void onClientTick(MinecraftClient client) {
-        tickCount++;
-
         // Обрабатываем обнаруженное двоеточие
         if (colonDetected) {
             colonDetected = false;
             if (!isTracking) {
                 startTracking();
-                LOGGER.info("🎯 Двоеточие обнаружено! Начинаем отслеживание...");
             }
         }
 
@@ -112,11 +100,6 @@ public class ComplitionAssistClient implements ClientModInitializer {
         if (pendingReplacement != null) {
             processReplacement(client);
             pendingReplacement = null;
-        }
-
-        // Логируем только каждые 200 тиков
-        if (tickCount % 200 == 0) {
-            LOGGER.info("Tick #{}", tickCount);
         }
 
         if (isTracking) {
@@ -130,14 +113,11 @@ public class ComplitionAssistClient implements ClientModInitializer {
 
     // Этот метод нужно будет вызывать из Mixin при вводе символов
     public static void onCharTyped(char character) {
-        LOGGER.info("Символ введен: '{}' (код: {})", character, (int) character);
-
         // Проверяем двоеточие
         if (character == ':') {
             // Сбрасываем предыдущую строку и начинаем запись заново
             resetTracking();
             colonDetected = true;
-            LOGGER.info("Обнаружено двоеточие! Сбрасываем и начинаем новую последовательность.");
             return;
         }
 
@@ -145,22 +125,18 @@ public class ComplitionAssistClient implements ClientModInitializer {
         if (isTracking) {
             // Проверяем максимальную длину (20 символов)
             if (currentSequence.length() >= 20) {
-                LOGGER.info("Достигнута максимальная длина последовательности (20 символов). Сбрасываем отслеживание.");
                 resetTracking();
                 return;
             }
 
             // Добавляем символ в последовательность
             currentSequence.append(character);
-            LOGGER.info("Добавлен символ '{}'. Последовательность: {}", character, currentSequence.toString());
         }
     }
 
     // Этот метод нужно будет вызывать из Mixin при нажатии специальных клавиш
     // Этот метод нужно будет вызывать из Mixin при нажатии специальных клавиш
     public static void onKeyPressed(int keyCode, int modifiers) {
-        LOGGER.info("Клавиша нажата: код {}, модификаторы: {}", keyCode, modifiers);
-
         // Проверяем Shift+Пробел (Shift = 1, Пробел = 32)
         boolean shiftPressed = (modifiers & 1) != 0; // GLFW.GLFW_MOD_SHIFT = 1
         boolean spacePressed = keyCode == 32; // GLFW.GLFW_KEY_SPACE = 32
@@ -177,13 +153,10 @@ public class ComplitionAssistClient implements ClientModInitializer {
             if (isTracking) {
                 // Проверяем максимальную длину
                 if (currentSequence.length() >= 20) {
-                    LOGGER.info("Достигнута максимальная длина последовательности (20 символов). Сбрасываем отслеживание.");
                     resetTracking();
                     return;
                 }
-
                 currentSequence.append(' ');
-                LOGGER.info("Пробел добавлен. Последовательность: '{}'", currentSequence.toString());
             }
             return;
         }
@@ -194,10 +167,8 @@ public class ComplitionAssistClient implements ClientModInitializer {
         if (keyCode == 259) { // GLFW.GLFW_KEY_BACKSPACE
             if (currentSequence.length() > 0) {
                 currentSequence.deleteCharAt(currentSequence.length() - 1);
-                LOGGER.info("Backspace. Текущая последовательность: '{}'", currentSequence.toString());
             } else {
                 // Backspace на пустой последовательности после двоеточия - сбрасываем
-                LOGGER.info("Backspace на пустой последовательности. Сбрасываем отслеживание.");
                 resetTracking();
             }
             return;
@@ -205,7 +176,6 @@ public class ComplitionAssistClient implements ClientModInitializer {
 
         // Escape - сбрасываем отслеживание
         if (keyCode == 256) { // GLFW.GLFW_KEY_ESCAPE
-            LOGGER.info("Escape нажат. Сбрасываем отслеживание.");
             resetTracking();
             return;
         }
@@ -214,13 +184,11 @@ public class ComplitionAssistClient implements ClientModInitializer {
     private static void startTracking() {
         isTracking = true;
         currentSequence = new StringBuilder();
-        LOGGER.info("Начато отслеживание последовательности");
     }
 
     private static void resetTracking() {
         isTracking = false;
         currentSequence = new StringBuilder();
-        LOGGER.info("Отслеживание сброшено");
     }
 
     private static void processTabReplacement() {
@@ -228,15 +196,12 @@ public class ComplitionAssistClient implements ClientModInitializer {
         String replacement = SHORTCUTS.get(sequence.toLowerCase());
 
         if (replacement != null && !sequence.isEmpty()) {
-            LOGGER.info("✅ НАЙДЕНО СОВПАДЕНИЕ! Заменяем '{}' на '{}'", sequence, replacement);
-
             // Создаем задачу на замену
             pendingReplacement = new ReplacementTask(sequence, replacement);
 
             // Сбрасываем отслеживание
             resetTracking();
         } else {
-            LOGGER.info("❌ Совпадение не найдено для последовательности: '{}'", sequence);
             resetTracking();
         }
     }
@@ -245,19 +210,13 @@ public class ComplitionAssistClient implements ClientModInitializer {
         if (pendingReplacement == null) return;
 
         try {
-            LOGGER.info("Выполняем замену: удаляем '{}', вставляем '{}'",
-                    pendingReplacement.sequence, pendingReplacement.replacement);
-
             // Симулируем Backspace для удаления двоеточия и последовательности
             simulateBackspaces(client, pendingReplacement.sequence.length() + 2);
 
             // Вставляем замену
             simulateTextInput(client, pendingReplacement.replacement);
 
-            LOGGER.info("✅ Замена выполнена успешно!");
-
         } catch (Exception e) {
-            LOGGER.error("Ошибка при выполнении замены: {}", e.getMessage());
             e.printStackTrace();
         }
     }
@@ -272,8 +231,6 @@ public class ComplitionAssistClient implements ClientModInitializer {
 
             long window = client.getWindow().getHandle();
             Keyboard keyboard = client.keyboard;
-
-            LOGGER.info("Симулируем {} нажатий Backspace", count);
 
             for (int i = 0; i < count; i++) {
                 // Симулируем нажатие Backspace (PRESS)
@@ -290,7 +247,6 @@ public class ComplitionAssistClient implements ClientModInitializer {
             }
 
         } catch (Exception e) {
-            LOGGER.error("Ошибка при симуляции Backspace: {}", e.getMessage());
             throw new RuntimeException("Failed to simulate backspace", e);
         }
     }
@@ -306,8 +262,6 @@ public class ComplitionAssistClient implements ClientModInitializer {
             long window = client.getWindow().getHandle();
             Keyboard keyboard = client.keyboard;
 
-            LOGGER.info("Симулируем ввод текста: '{}'", text);
-
             for (char c : text.toCharArray()) {
                 onCharMethod.invoke(keyboard, window, (int)c, 0);
 
@@ -316,14 +270,12 @@ public class ComplitionAssistClient implements ClientModInitializer {
             }
 
         } catch (Exception e) {
-            LOGGER.error("Ошибка при симуляции ввода текста: {}", e.getMessage());
             throw new RuntimeException("Failed to simulate text input", e);
         }
     }
 
     public static void addShortcut(String shortcut, String replacement) {
         SHORTCUTS.put(shortcut.toLowerCase(), replacement);
-        LOGGER.info("Добавлено сокращение: {} -> {}", shortcut, replacement);
     }
 
     public static Map<String, String> getShortcuts() {
@@ -331,8 +283,6 @@ public class ComplitionAssistClient implements ClientModInitializer {
     }
 
     private static List<String> getSuggestions(String input) {
-        LOGGER.info("Getting suggestions for input: '{}'", input);
-
         List<String> suggestions = new ArrayList<>();
         String inputLower = input.toLowerCase();
 
@@ -347,7 +297,6 @@ public class ComplitionAssistClient implements ClientModInitializer {
             suggestions = suggestions.subList(0, 5);
         }
 
-        LOGGER.info("Found {} suggestions: {}", suggestions.size(), suggestions);
         return suggestions;
     }
 
@@ -429,9 +378,6 @@ public class ComplitionAssistClient implements ClientModInitializer {
 
             // 2. Яркий текст поверх
             context.drawText(textRenderer, displayText, fieldX, textY, 0xFFFFFF00, false); // Желтый
-
-            // 3. Добавляем лог
-            ComplitionAssistClient.LOGGER.info("🎨 Рисую: '{}' на {},{}", displayText, fieldX, textY);
 
             textY += lineHeight;
         }
