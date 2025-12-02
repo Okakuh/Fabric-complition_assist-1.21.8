@@ -318,17 +318,43 @@ public class ComplitionAssistClient implements ClientModInitializer {
         int fieldY = activeField.getY();
         int fieldHeight = activeField.getHeight();
 
-        // Всегда показываем НАД полем
+        // Получаем размеры экрана
+        int screenHeight = client.getWindow().getScaledHeight();
+
+        // Вычисляем размеры подсказок
         int suggestionCount = currentSuggestions.size();
         int lineHeight = 12;
         int totalHeight = suggestionCount * lineHeight;
         int padding = 5;
 
-        int startY = fieldY - totalHeight - padding;
+        // Пробуем отобразить СНИЗУ поля (по умолчанию)
+        int startYBelow = fieldY + fieldHeight + padding;
+        int availableSpaceBelow = screenHeight - startYBelow - 10; // -10 для отступа от низа экрана
 
-        // Если не хватает места сверху, показываем под полем
-        if (startY < 5) {
-            startY = fieldY + fieldHeight + padding;
+        // Пробуем отобразить СВЕРХУ поля (альтернатива)
+        int startYAbove = fieldY - totalHeight - padding;
+        int availableSpaceAbove = startYAbove - 10; // -10 для отступа от верха экрана
+
+        int startY;
+        boolean showBelow = true;
+
+        // Проверяем, хватает ли места снизу
+        if (availableSpaceBelow >= totalHeight) {
+            // Места достаточно снизу - показываем снизу
+            startY = startYBelow;
+        } else if (availableSpaceAbove >= totalHeight) {
+            // Места достаточно сверху - показываем сверху
+            startY = startYAbove;
+            showBelow = false;
+        } else {
+            // Не хватает места ни снизу, ни сверху
+            // Показываем там, где больше места
+            if (availableSpaceBelow >= availableSpaceAbove) {
+                startY = startYBelow;
+            } else {
+                startY = startYAbove;
+                showBelow = false;
+            }
         }
 
         // Собираем текст для отображения
@@ -354,17 +380,17 @@ public class ComplitionAssistClient implements ClientModInitializer {
         context.fill(bgX1, bgY1, bgX2, bgY2, 0x80000000);
         context.drawBorder(bgX1, bgY1, maxWidth + 8, totalHeight + 4, 0xFFFFFFFF);
 
-        // Рисуем текст С ОБВОДКОЙ для максимальной видимости
+        // Рисуем текст
         int textY = startY;
         for (String displayText : displayTexts) {
-            // 1. Черная обводка (4 стороны)
+            // Черная обводка для лучшей видимости
             context.drawText(textRenderer, displayText, fieldX - 1, textY, 0xFF000000, false);
             context.drawText(textRenderer, displayText, fieldX + 1, textY, 0xFF000000, false);
             context.drawText(textRenderer, displayText, fieldX, textY - 1, 0xFF000000, false);
             context.drawText(textRenderer, displayText, fieldX, textY + 1, 0xFF000000, false);
 
-            // 2. Яркий текст поверх
-            context.drawText(textRenderer, displayText, fieldX, textY, 0xFFFFFF00, false); // Желтый
+            // Белый текст поверх
+            context.drawText(textRenderer, displayText, fieldX, textY, 0xFFFFFFFF, false);
 
             textY += lineHeight;
         }
