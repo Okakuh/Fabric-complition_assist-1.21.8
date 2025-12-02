@@ -191,12 +191,18 @@ public class ComplitionAssistClient implements ClientModInitializer {
     }
 
     private static void processTabReplacement() {
-        String sequence = currentSequence.toString();
-        String replacement = SHORTCUTS.get(sequence.toLowerCase());
+        if (currentSuggestions == null || currentSuggestions.isEmpty()) {
+            resetTracking();
+            return;
+        }
 
-        if (replacement != null && !sequence.isEmpty()) {
+        // Берем первый предложенный вариант
+        String suggestion = currentSuggestions.get(0);
+        String replacement = SHORTCUTS.get(suggestion.toLowerCase());
+
+        if (replacement != null) {
             // Создаем задачу на замену
-            pendingReplacement = new ReplacementTask(sequence, replacement);
+            pendingReplacement = new ReplacementTask(currentSequence.toString(), replacement);
 
             // Сбрасываем отслеживание
             resetTracking();
