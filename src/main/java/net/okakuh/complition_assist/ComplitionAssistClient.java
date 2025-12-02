@@ -436,4 +436,13 @@ public class ComplitionAssistClient implements ClientModInitializer {
             textY += lineHeight;
         }
     }
+
+    public static boolean isTracking() {
+        return isTracking;
+    }
+
+    public static List<String> getCurrentSuggestions() {
+        return currentSuggestions;
+    }
+
 }
