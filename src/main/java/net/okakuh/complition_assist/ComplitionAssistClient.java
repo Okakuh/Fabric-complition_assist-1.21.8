@@ -8,6 +8,7 @@ import net.minecraft.client.Keyboard;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.resource.ResourceType;
+import net.okakuh.complition_assist.mixin.KeyboardAccessor;
 import org.joml.Vector2i;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
@@ -229,64 +230,22 @@ public class ComplitionAssistClient implements ClientModInitializer {
     }
 
     private void simulateBackspaces(MinecraftClient client, int count) {
-        try {
-            // Получаем доступ к приватному методу onKey через reflection
-            Method onKeyMethod = Keyboard.class.getDeclaredMethod(
-                    "onKey", long.class, int.class, int.class, int.class, int.class
-            );
-            onKeyMethod.setAccessible(true);
+        KeyboardAccessor keyboard = (KeyboardAccessor) client.keyboard;
+        long window = client.getWindow().getHandle();
 
-            long window = client.getWindow().getHandle();
-            Keyboard keyboard = client.keyboard;
-
-            for (int i = 0; i < count; i++) {
-                // Симулируем нажатие Backspace (PRESS)
-                onKeyMethod.invoke(keyboard, window, GLFW.GLFW_KEY_BACKSPACE, 0, GLFW.GLFW_PRESS, 0);
-
-                // УБИРАЕМ задержку
-                // try { Thread.sleep(30); } catch (InterruptedException e) {}
-
-                // Симулируем отпускание Backspace (RELEASE)
-                onKeyMethod.invoke(keyboard, window, GLFW.GLFW_KEY_BACKSPACE, 0, GLFW.GLFW_RELEASE, 0);
-
-                // УБИРАЕМ задержку между нажатиями
-                // try { Thread.sleep(30); } catch (InterruptedException e) {}
-            }
-
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to simulate backspace", e);
+        for (int i = 0; i < count; i++) {
+            keyboard.invokeOnKey(window, GLFW.GLFW_KEY_BACKSPACE, 0, GLFW.GLFW_PRESS, 0);
+            keyboard.invokeOnKey(window, GLFW.GLFW_KEY_BACKSPACE, 0, GLFW.GLFW_RELEASE, 0);
         }
     }
 
     private void simulateTextInput(MinecraftClient client, String text) {
-        try {
-            // Получаем доступ к приватному методу onChar через reflection
-            Method onCharMethod = Keyboard.class.getDeclaredMethod(
-                    "onChar", long.class, int.class, int.class
-            );
-            onCharMethod.setAccessible(true);
+        KeyboardAccessor keyboard = (KeyboardAccessor) client.keyboard;
+        long window = client.getWindow().getHandle();
 
-            long window = client.getWindow().getHandle();
-            Keyboard keyboard = client.keyboard;
-
-            for (char c : text.toCharArray()) {
-                onCharMethod.invoke(keyboard, window, (int)c, 0);
-
-                // УБИРАЕМ задержку между символами
-                // try { Thread.sleep(30); } catch (InterruptedException e) {}
-            }
-
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to simulate text input", e);
+        for (char c : text.toCharArray()) {
+            keyboard.invokeOnChar(window, (int)c, 0);
         }
-    }
-
-    public static void addShortcut(String shortcut, String replacement) {
-        SHORTCUTS.put(shortcut.toLowerCase(), replacement);
-    }
-
-    public static Map<String, String> getShortcuts() {
-        return new HashMap<>(SHORTCUTS);
     }
 
     private static List<String> getSuggestions(String input) {
