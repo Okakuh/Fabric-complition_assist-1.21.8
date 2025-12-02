@@ -22,7 +22,7 @@ public abstract class ScreenMixin {
                 !ComplitionAssistClient.getCurrentSuggestions().isEmpty() &&
                 InputFieldTracker.hasActiveField()) {
 
-            ComplitionAssistClient.renderSuggestionsHud(context, 0, 0);
+            ComplitionAssistClient.renderSuggestionsHud(context);
         }
     }
 }

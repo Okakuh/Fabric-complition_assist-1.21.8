@@ -12,7 +12,7 @@ import java.util.List;
 
 public class InputFieldTracker {
     private static TextFieldWidget activeTextField = null;
-    private static Vector2i fieldPosition = new Vector2i(0, 0);
+    private static Vector2i cursorPosition = new Vector2i(0, 0);
 
     public static void update() {
         MinecraftClient client = MinecraftClient.getInstance();
@@ -24,9 +24,28 @@ public class InputFieldTracker {
         activeTextField = findFocusedTextFieldRecursive(client.currentScreen);
 
         if (activeTextField != null) {
-            fieldPosition.x = activeTextField.getX();
-            fieldPosition.y = activeTextField.getY(); // Верхняя граница!
+            // Получаем позицию курсора внутри текстового поля
+            calculateCursorPosition(activeTextField);
         }
+    }
+
+    private static void calculateCursorPosition(TextFieldWidget field) {
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client == null || client.textRenderer == null) return;
+
+        // Получаем текст до курсора
+        String textBeforeCursor = field.getText().substring(0, Math.min(field.getCursor(), field.getText().length()));
+
+        // Вычисляем ширину текста до курсора
+        int textWidth = client.textRenderer.getWidth(textBeforeCursor);
+
+        // Позиция курсора = левая граница поля + ширина текста до курсора
+        cursorPosition.x = field.getX() + textWidth;
+        cursorPosition.y = field.getY() + field.getHeight(); // Нижняя граница поля
+    }
+
+    public static Vector2i getCursorPosition() {
+        return cursorPosition;
     }
 
     public static TextFieldWidget findFocusedTextFieldRecursive(Screen screen) {
@@ -70,10 +89,6 @@ public class InputFieldTracker {
 
     public static TextFieldWidget getActiveField() {
         return activeTextField;
-    }
-
-    public static Vector2i getFieldPosition() {
-        return fieldPosition;
     }
 
     public static boolean hasActiveField() {

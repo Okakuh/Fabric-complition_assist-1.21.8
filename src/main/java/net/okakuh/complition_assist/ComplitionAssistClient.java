@@ -80,8 +80,7 @@ public class ComplitionAssistClient implements ClientModInitializer {
             if (isTracking && !currentSuggestions.isEmpty()) {
                 InputFieldTracker.update();
                 if (InputFieldTracker.hasActiveField()) {
-                    Vector2i pos = InputFieldTracker.getFieldPosition();
-                    renderSuggestionsHud(drawContext, pos.x, pos.y);
+                    renderSuggestionsHud(drawContext);
                 }
             }
         });
@@ -300,7 +299,7 @@ public class ComplitionAssistClient implements ClientModInitializer {
         return SHORTCUTS.get(shortcut.toLowerCase());
     }
 
-    public static void renderSuggestionsHud(DrawContext context, int x, int y) {
+    public static void renderSuggestionsHud(DrawContext context) {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client == null || client.textRenderer == null) return;
 
@@ -310,15 +309,19 @@ public class ComplitionAssistClient implements ClientModInitializer {
 
         net.minecraft.client.font.TextRenderer textRenderer = client.textRenderer;
 
-        // Получаем активное поле
+        // Получаем позицию курсора
+        Vector2i cursorPos = InputFieldTracker.getCursorPosition();
+        int cursorX = cursorPos.x;
+        int cursorY = cursorPos.y;
+
+        // Получаем поле для его высоты
         TextFieldWidget activeField = InputFieldTracker.getActiveField();
         if (activeField == null) return;
 
-        int fieldX = activeField.getX();
-        int fieldY = activeField.getY();
         int fieldHeight = activeField.getHeight();
 
         // Получаем размеры экрана
+        int screenWidth = client.getWindow().getScaledWidth();
         int screenHeight = client.getWindow().getScaledHeight();
 
         // Вычисляем размеры подсказок
@@ -327,13 +330,13 @@ public class ComplitionAssistClient implements ClientModInitializer {
         int totalHeight = suggestionCount * lineHeight;
         int padding = 5;
 
-        // Пробуем отобразить СНИЗУ поля (по умолчанию)
-        int startYBelow = fieldY + fieldHeight + padding;
-        int availableSpaceBelow = screenHeight - startYBelow - 10; // -10 для отступа от низа экрана
+        // Пробуем отобразить СНИЗУ курсора (по умолчанию)
+        int startYBelow = cursorY + padding;
+        int availableSpaceBelow = screenHeight - startYBelow - 10;
 
-        // Пробуем отобразить СВЕРХУ поля (альтернатива)
-        int startYAbove = fieldY - totalHeight - padding;
-        int availableSpaceAbove = startYAbove - 10; // -10 для отступа от верха экрана
+        // Пробуем отобразить СВЕРХУ курсора (альтернатива)
+        int startYAbove = cursorY - totalHeight - padding - fieldHeight;
+        int availableSpaceAbove = startYAbove - 10;
 
         int startY;
         boolean showBelow = true;
@@ -348,7 +351,6 @@ public class ComplitionAssistClient implements ClientModInitializer {
             showBelow = false;
         } else {
             // Не хватает места ни снизу, ни сверху
-            // Показываем там, где больше места
             if (availableSpaceBelow >= availableSpaceAbove) {
                 startY = startYBelow;
             } else {
@@ -357,7 +359,7 @@ public class ComplitionAssistClient implements ClientModInitializer {
             }
         }
 
-        // Собираем текст для отображения
+        // Также проверяем, чтобы подсказки не выходили за правый край экрана
         List<String> displayTexts = new ArrayList<>();
         int maxWidth = 0;
 
@@ -371,10 +373,17 @@ public class ComplitionAssistClient implements ClientModInitializer {
 
         if (maxWidth == 0) return;
 
+        // Проверяем, помещаются ли подсказки справа от курсора
+        int startX = cursorX;
+        if (cursorX + maxWidth + 10 > screenWidth) {
+            // Не помещается справа - показываем слева от курсора
+            startX = Math.max(10, cursorX - maxWidth - 10);
+        }
+
         // Рисуем фон
-        int bgX1 = fieldX - 4;
+        int bgX1 = startX - 4;
         int bgY1 = startY - 2;
-        int bgX2 = fieldX + maxWidth + 6;
+        int bgX2 = startX + maxWidth + 6;
         int bgY2 = startY + totalHeight + 2;
 
         context.fill(bgX1, bgY1, bgX2, bgY2, 0x80000000);
@@ -383,17 +392,26 @@ public class ComplitionAssistClient implements ClientModInitializer {
         // Рисуем текст
         int textY = startY;
         for (String displayText : displayTexts) {
-            // Черная обводка для лучшей видимости
-            context.drawText(textRenderer, displayText, fieldX - 1, textY, 0xFF000000, false);
-            context.drawText(textRenderer, displayText, fieldX + 1, textY, 0xFF000000, false);
-            context.drawText(textRenderer, displayText, fieldX, textY - 1, 0xFF000000, false);
-            context.drawText(textRenderer, displayText, fieldX, textY + 1, 0xFF000000, false);
+            // Черная обводка
+            context.drawText(textRenderer, displayText, startX - 1, textY, 0xFF000000, false);
+            context.drawText(textRenderer, displayText, startX + 1, textY, 0xFF000000, false);
+            context.drawText(textRenderer, displayText, startX, textY - 1, 0xFF000000, false);
+            context.drawText(textRenderer, displayText, startX, textY + 1, 0xFF000000, false);
 
-            // Белый текст поверх
-            context.drawText(textRenderer, displayText, fieldX, textY, 0xFFFFFFFF, false);
+            // Белый текст
+            context.drawText(textRenderer, displayText, startX, textY, 0xFFFFFFFF, false);
 
             textY += lineHeight;
         }
+
+//        // Опционально: рисуем линию от подсказок к курсору
+//        if (showBelow) {
+//            // Линия от нижнего края подсказок к курсору
+//            context.drawLine(cursorX, cursorY, startX + maxWidth/2, startY - 2, 0x80FFFFFF);
+//        } else {
+//            // Линия от верхнего края подсказок к курсору
+//            context.drawLine(cursorX, cursorY - fieldHeight, startX + maxWidth/2, startY + totalHeight + 2, 0x80FFFFFF);
+//        }
     }
 
     public static boolean isTracking() {
