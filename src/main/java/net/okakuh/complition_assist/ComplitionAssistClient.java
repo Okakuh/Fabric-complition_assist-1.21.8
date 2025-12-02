@@ -135,7 +135,6 @@ public class ComplitionAssistClient implements ClientModInitializer {
     }
 
     // Этот метод нужно будет вызывать из Mixin при нажатии специальных клавиш
-    // Этот метод нужно будет вызывать из Mixin при нажатии специальных клавиш
     public static void onKeyPressed(int keyCode, int modifiers) {
         // Проверяем Shift+Пробел (Shift = 1, Пробел = 32)
         boolean shiftPressed = (modifiers & 1) != 0; // GLFW.GLFW_MOD_SHIFT = 1
@@ -286,6 +285,10 @@ public class ComplitionAssistClient implements ClientModInitializer {
         List<String> suggestions = new ArrayList<>();
         String inputLower = input.toLowerCase();
 
+        if (input.isEmpty()) {
+            return suggestions;
+        }
+
         for (String shortcut : SHORTCUTS.keySet()) {
             if (shortcut.toLowerCase().startsWith(inputLower)) {
                 suggestions.add(shortcut);
@@ -314,14 +317,6 @@ public class ComplitionAssistClient implements ClientModInitializer {
         }
 
         net.minecraft.client.font.TextRenderer textRenderer = client.textRenderer;
-
-        // ТЕСТ: нарисовать большой красный текст в центре экрана
-        int screenWidth = client.getWindow().getScaledWidth();
-        int screenHeight = client.getWindow().getScaledHeight();
-        context.drawText(textRenderer, "ТЕСТ ТЕКСТА",
-                screenWidth/2 - 50, screenHeight/2, 0xFF0000, true);
-
-        // Остальной код...
 
         // Получаем активное поле
         TextFieldWidget activeField = InputFieldTracker.getActiveField();
