@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "complition_assist",
+  "version": "${version}",
+  "name": "ComplitionAssist",
+  "description": "Автодополнение сокращений по нажатию Tab",
+  "authors": ["Okakuh"],
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "net.okakuh.complition_assist.ComplitionAssistClient"
+    ]
+  },
+  "mixins": [
+    "complition_assist.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.16.9",
+    "minecraft": "~1.21.8",
+    "fabric-api": "*"
+  }
+}
