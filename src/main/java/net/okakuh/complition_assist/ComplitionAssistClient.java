@@ -7,10 +7,22 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.Keyboard;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.resource.ResourceType;
 import org.joml.Vector2i;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
+import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
+import net.minecraft.resource.ResourceManager;
+import net.minecraft.resource.Resource;
+import net.minecraft.util.Identifier;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import java.io.InputStreamReader;
+import java.util.List;
 
 import java.lang.reflect.Method;
 import java.util.*;
@@ -18,6 +30,9 @@ import java.util.*;
 public class ComplitionAssistClient implements ClientModInitializer {
     public static final String MOD_ID = "complition_assist";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Identifier SHORTCUTS_ID = Identifier.of("complition_assist", "shortcuts.json");
 
     private static final Map<String, String> SHORTCUTS = new HashMap<>();
 
@@ -45,8 +60,20 @@ public class ComplitionAssistClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        // Загрузка конфигурации
-        initializeShortcuts();
+        // Регистрация ResourceReloadListener
+        ResourceManagerHelper.get(ResourceType.CLIENT_RESOURCES).registerReloadListener(
+                new SimpleSynchronousResourceReloadListener() {
+                    @Override
+                    public Identifier getFabricId() {
+                        return Identifier.of("complition_assist", "shortcuts_loader");
+                    }
+
+                    @Override
+                    public void reload(ResourceManager resourceManager) {
+                        ComplitionAssistClient.loadFromResourcePacks(resourceManager);
+                    }
+                }
+        );
 
         HudRenderCallback.EVENT.register((drawContext, tickCounter) -> {
             if (isTracking && !currentSuggestions.isEmpty()) {
@@ -60,28 +87,6 @@ public class ComplitionAssistClient implements ClientModInitializer {
 
         // Регистрация других обработчиков
         ClientTickEvents.END_CLIENT_TICK.register(client -> onClientTick(client));
-    }
-
-    private void initializeShortcuts() {
-        // Базовые сокращения
-        SHORTCUTS.put("пкд", "Привет как дела?");
-        SHORTCUTS.put("гг", "Хорошей игры!");
-        SHORTCUTS.put("спс", "Спасибо!");
-        SHORTCUTS.put("нг", "С наступающим!");
-        SHORTCUTS.put("омг", "О боже мой!");
-        SHORTCUTS.put("лол", "😂");
-        SHORTCUTS.put("рп", "Ролевая игра");
-        SHORTCUTS.put("пж", "Пожалуйста");
-        SHORTCUTS.put("нп", "Не за что!");
-        SHORTCUTS.put("мб", "Может быть");
-
-        // Английские примеры
-        SHORTCUTS.put("gg", "Good game!");
-        SHORTCUTS.put("ty", "Thank you!");
-        SHORTCUTS.put("np", "No problem!");
-        SHORTCUTS.put("brb", "Be right back!");
-        SHORTCUTS.put("afk", "Away from keyboard");
-        SHORTCUTS.put("test", "Это тестовая замена!");
     }
 
     private void onClientTick(MinecraftClient client) {
@@ -414,4 +419,38 @@ public class ComplitionAssistClient implements ClientModInitializer {
         return currentSuggestions;
     }
 
+    public static void loadFromResourcePacks(ResourceManager resourceManager) {
+        // Сохраняем дефолтные сокращения
+        Map<String, String> defaultShortcuts = new HashMap<>(SHORTCUTS);
+        SHORTCUTS.clear();
+        SHORTCUTS.putAll(defaultShortcuts);
+
+        // Загружаем из всех ресурспаков
+        try {
+            List<Resource> resources = resourceManager.getAllResources(SHORTCUTS_ID);
+
+            for (Resource resource : resources) {
+                try (InputStreamReader reader = new InputStreamReader(resource.getInputStream())) {
+                    JsonObject json = GSON.fromJson(reader, JsonObject.class);
+
+                    if (json.has("shortcuts")) {
+                        JsonObject shortcutsObj = json.getAsJsonObject("shortcuts");
+
+                        for (Map.Entry<String, com.google.gson.JsonElement> entry : shortcutsObj.entrySet()) {
+                            String key = entry.getKey();
+                            String value = entry.getValue().getAsString();
+                            SHORTCUTS.put(key.toLowerCase(), value);
+                        }
+                    }
+                } catch (Exception e) {
+                    LOGGER.error("Error loading shortcuts from {}", resource.getPack(), e);
+                }
+            }
+
+            LOGGER.info("Loaded {} shortcuts from resource packs", SHORTCUTS.size() - defaultShortcuts.size());
+
+        } catch (Exception e) {
+            LOGGER.error("Error loading shortcuts", e);
+        }
+    }
 }
