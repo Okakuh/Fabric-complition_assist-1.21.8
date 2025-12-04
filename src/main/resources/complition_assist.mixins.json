@@ -4,9 +4,10 @@
   "package": "net.okakuh.complition_assist.mixin",
   "compatibilityLevel": "JAVA_21",
   "client": [
+    "TextFieldWidgetMixin",
+    "ScreenMixin",
     "KeyboardMixin",
-    "KeyboardAccessor",
-    "ScreenMixin"
+    "KeyboardAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

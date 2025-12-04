@@ -1,0 +1,335 @@
+package net.okakuh.complition_assist;
+
+import net.fabricmc.api.ClientModInitializer;
+
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.widget.TextFieldWidget;
+
+import net.okakuh.complition_assist.mixin.KeyboardAccessor;
+import org.lwjgl.glfw.GLFW;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+
+import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
+import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
+
+
+import net.minecraft.resource.ResourceManager;
+import net.minecraft.resource.Resource;
+import net.minecraft.util.Identifier;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+
+import java.io.InputStreamReader;
+import java.util.List;
+
+import java.util.*;
+
+public class ComplitionAssist implements ClientModInitializer {
+    public static final String MOD_ID = "complition_assist";
+    public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Identifier SHORTCUTS_ID = Identifier.of("complition_assist", "shortcuts.json");
+
+    private static final Map<String, String> SHORTCUTS = new HashMap<>();
+
+    public static final String keyChar = ":";
+    private static boolean SUGGEST = false;
+
+    private static String sequence = "";
+
+    private static List<String> currentSuggestions = new ArrayList<>();
+    private static List<String> displaySuggestions = new ArrayList<>();
+
+    private static int suggestionXpos = 0;
+    private static int suggestionYpos = 0;
+    private static int suggestionYcorrection = 0;
+
+    @Override
+    public void onInitializeClient() {
+        initializeDefaultShortcuts();
+
+        // Регистрация ResourceReloadListener
+        ResourceManagerHelper.get(net.minecraft.resource.ResourceType.CLIENT_RESOURCES).registerReloadListener(
+                new SimpleSynchronousResourceReloadListener() {
+                    @Override
+                    public Identifier getFabricId() {
+                        return Identifier.of("complition_assist", "shortcuts_loader");
+                    }
+
+                    @Override
+                    public void reload(ResourceManager resourceManager) {
+                        loadFromResourcePacks(resourceManager);
+                    }
+                }
+        );
+    }
+
+    private void initializeDefaultShortcuts() {
+        SHORTCUTS.put("пкд", "Привет как дела?");
+        SHORTCUTS.put("гг", "Хорошей игры!");
+    }
+
+    public static void onKeyPresed(int keyCode, int modifiers) {
+        boolean shiftPressed = (modifiers & 1) != 0;
+        boolean spacePressed = keyCode == 32;
+
+        if (SUGGEST) {
+            if (shiftPressed && spacePressed) {
+                String suggestion = currentSuggestions.getFirst();
+                String replacement = getShortcutValue(suggestion);
+                if (replacement != null) {
+                    processReplacement(net.minecraft.client.MinecraftClient.getInstance(), replacement);
+                }
+            }
+        }
+    }
+
+    public static void render(DrawContext context) {
+        if (SUGGEST) {
+            renderSuggestions(context);
+        }
+    }
+
+    private static void parseSuggestions() {
+        Set<String> startsWith = new LinkedHashSet<>();
+        Set<String> containsOnly = new LinkedHashSet<>();
+
+        String inputLower = sequence.toLowerCase();
+
+        // Один проход по всем сокращениям
+        for (String shortcut : SHORTCUTS.keySet()) {
+            String shortcutLower = shortcut.toLowerCase();
+
+            if (shortcutLower.startsWith(inputLower)) {
+                startsWith.add(shortcut);
+            } else if (shortcutLower.contains(inputLower)) {
+                containsOnly.add(shortcut);
+            }
+        }
+
+        // Объединяем: сначала startsWith, потом containsOnly
+        List<String> result = new ArrayList<>();
+        result.addAll(startsWith);
+        result.addAll(containsOnly);
+
+        // Сортируем внутри каждой группы
+
+        // Сортируем первую группу (startsWith)
+        List<String> sortedStartsWith = new ArrayList<>(startsWith);
+        sortedStartsWith.sort(String::compareToIgnoreCase);
+        List<String> sortedResult = new ArrayList<>(sortedStartsWith);
+
+        // Сортируем вторую группу (containsOnly)
+        List<String> sortedContainsOnly = new ArrayList<>(containsOnly);
+        sortedContainsOnly.sort(String::compareToIgnoreCase);
+        sortedResult.addAll(sortedContainsOnly);
+
+        // Ограничиваем количество
+        if (sortedResult.size() > 10) {
+            currentSuggestions = sortedResult.subList(0, 10);
+        } else {
+            currentSuggestions = sortedResult;
+        }
+    }
+
+    private static void parseDisplaySuggestions() {
+        List<String> displayList = new ArrayList<>();
+
+        for (String suggestion : currentSuggestions) {
+            String fullText = getShortcutValue(suggestion);
+            if (fullText != null) {
+                String displayText = suggestion + " → " + fullText;
+                displayList.add(displayText);
+            }
+        }
+
+        displaySuggestions = displayList;
+    }
+
+    private static String getShortcutValue(String shortcut) {
+        return SHORTCUTS.get(shortcut.toLowerCase());
+    }
+
+    private static void loadFromResourcePacks(ResourceManager resourceManager) {
+        // Сохраняем дефолтные сокращения
+        Map<String, String> defaultShortcuts = new HashMap<>(SHORTCUTS);
+        SHORTCUTS.clear();
+        SHORTCUTS.putAll(defaultShortcuts);
+
+        // Загружаем из всех ресурспаков
+        try {
+            List<Resource> resources = resourceManager.getAllResources(SHORTCUTS_ID);
+
+            for (Resource resource : resources) {
+                try (InputStreamReader reader = new InputStreamReader(resource.getInputStream())) {
+                    JsonObject json = GSON.fromJson(reader, JsonObject.class);
+
+                    if (json.has("shortcuts")) {
+                        JsonObject shortcutsObj = json.getAsJsonObject("shortcuts");
+
+                        for (Map.Entry<String, com.google.gson.JsonElement> entry : shortcutsObj.entrySet()) {
+                            String key = entry.getKey();
+                            String value = entry.getValue().getAsString();
+                            SHORTCUTS.put(key.toLowerCase(), value);
+                        }
+                    }
+                } catch (Exception e) {
+                    LOGGER.error("Error loading shortcuts from {}", resource.getPack(), e);
+                }
+            }
+
+            LOGGER.info("Loaded {} shortcuts from resource packs", SHORTCUTS.size() - defaultShortcuts.size());
+
+        } catch (Exception e) {
+            LOGGER.error("Error loading shortcuts", e);
+        }
+    }
+
+    private static String parseSequence(String text, int cursorPosition) {
+        String textBeforeCursor = text.substring(0, cursorPosition);
+        // Проверяем есть ли в первой строке знак :
+        int colonIndex = textBeforeCursor.lastIndexOf(keyChar);
+        if (colonIndex == -1) return "";
+
+        // Получаем текст между знаком : и концом строки (до курсора)
+        String betweenColonAndEnd = text.substring(colonIndex + 1);
+
+        // Проверяем есть ли пробелы между знаком : и концом строки
+        if (betweenColonAndEnd.contains(" ") || betweenColonAndEnd.contains("\n")) return "";
+
+        // Возвращаем символы от знака : до конца строки (до курсора)
+        return betweenColonAndEnd.toLowerCase();
+    }
+
+    public static void trigerTextFieldWidget(TextFieldWidget widget) {
+        int widgetX = widget.getX();
+        int widgetY = widget.getY();
+        int widgetHeight = widget.getHeight();
+        int widgetCursorPosition = widget.getCursor();
+        int widgetWidthBorder = (widget.getWidth() - widget.getInnerWidth()) / 2;
+
+        String widgetText = widget.getText();
+        String textBeforeCursor = widgetText.substring(0, widgetCursorPosition);
+
+        String new_sequence = parseSequence(widgetText, widgetCursorPosition);
+        if (new_sequence.isEmpty()) {
+            SUGGEST = false;
+            return;
+        }
+        sequence = new_sequence;
+
+        // Get new render position
+        var client = net.minecraft.client.MinecraftClient.getInstance();
+        if (client == null || client.textRenderer == null) return;
+
+        suggestionXpos = widgetX + widgetWidthBorder + client.textRenderer.getWidth(textBeforeCursor) - client.textRenderer.getWidth(sequence);
+        suggestionYcorrection = widgetHeight / 2;
+        suggestionYpos = widgetY + suggestionYcorrection;
+
+        parseSuggestions();
+        parseDisplaySuggestions();
+
+        SUGGEST = true;
+    }
+
+    private static void renderSuggestions(DrawContext context) {
+        if (displaySuggestions == null || displaySuggestions.isEmpty()) return;
+
+        var client = net.minecraft.client.MinecraftClient.getInstance();
+        if (client == null || client.textRenderer == null) return;
+
+        int cursorX = suggestionXpos;
+        int cursorY = suggestionYpos;
+
+        int screenWidth = client.getWindow().getScaledWidth();
+        int screenHeight = client.getWindow().getScaledHeight();
+
+        int suggestionCount = displaySuggestions.size();
+        int lineHeight = 12;
+        int totalHeight = suggestionCount * lineHeight;
+
+        int startYBelow = cursorY + suggestionYcorrection;
+        int availableSpaceBelow = screenHeight - startYBelow;
+
+        int startYAbove = cursorY - suggestionYcorrection - totalHeight - 6;
+
+        int startY;
+
+        if (availableSpaceBelow >= totalHeight) {
+            startY = startYBelow;
+        } else if (startYAbove >= totalHeight) {
+            startY = startYAbove;
+        } else {
+            startY = (availableSpaceBelow >= startYAbove) ? startYBelow : startYAbove;
+        }
+
+        int maxWidth = 0;
+        for (String displayText : displaySuggestions) {
+            maxWidth = Math.max(maxWidth, client.textRenderer.getWidth(displayText));
+        }
+
+        if (maxWidth == 0) return;
+
+        int startX = cursorX;
+        if (cursorX + maxWidth + 10 > screenWidth) {
+            startX = Math.max(10, cursorX - maxWidth - 10);
+        }
+
+        int bgX1 = startX - 4;
+        int bgY1 = startY - 2;
+        int bgX2 = startX + maxWidth + 6;
+        int bgY2 = startY + totalHeight + 2;
+
+        context.fill(bgX1, bgY1, bgX2, bgY2, 0x80000000);
+        context.drawBorder(bgX1, bgY1, maxWidth + 8, totalHeight + 4, 0xFFFFFFFF);
+
+        int textY = startY + 2;
+        for (String displayText : displaySuggestions) {
+            context.drawText(client.textRenderer, displayText, startX - 1, textY, 0xFF000000, false);
+            context.drawText(client.textRenderer, displayText, startX + 1, textY, 0xFF000000, false);
+            context.drawText(client.textRenderer, displayText, startX, textY - 1, 0xFF000000, false);
+            context.drawText(client.textRenderer, displayText, startX, textY + 1, 0xFF000000, false);
+
+            context.drawText(client.textRenderer, displayText, startX, textY, 0xFFFFFFFF, false);
+
+            textY += lineHeight;
+        }
+    }
+
+    public static void screenChanged() {
+        SUGGEST = false;
+    }
+
+    private static void processReplacement(MinecraftClient client, String replacement) {
+        // Симулируем Backspace для удаления двоеточия и последовательности
+        simulateBackspaces(client, sequence.length() + 1);
+
+        // Вставляем замену
+        simulateTextInput(client, replacement);
+    }
+
+    private static void simulateBackspaces(MinecraftClient client, int count) {
+        KeyboardAccessor keyboard = (KeyboardAccessor) client.keyboard;
+        long window = client.getWindow().getHandle();
+
+        for (int i = 0; i < count; i++) {
+            keyboard.invokeOnKey(window, GLFW.GLFW_KEY_BACKSPACE, 0, GLFW.GLFW_PRESS, 0);
+            keyboard.invokeOnKey(window, GLFW.GLFW_KEY_BACKSPACE, 0, GLFW.GLFW_RELEASE, 0);
+        }
+    }
+
+    private static void simulateTextInput(MinecraftClient client, String text) {
+        KeyboardAccessor keyboard = (KeyboardAccessor) client.keyboard;
+        long window = client.getWindow().getHandle();
+
+        for (char c : text.toCharArray()) {
+            keyboard.invokeOnChar(window, (int) c, 0);
+        }
+    }
+
+}

@@ -9,7 +9,7 @@
   "environment": "client",
   "entrypoints": {
     "client": [
-      "net.okakuh.complition_assist.ComplitionAssistClient"
+      "net.okakuh.complition_assist.ComplitionAssist"
     ]
   },
   "mixins": [
