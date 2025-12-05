@@ -40,12 +40,10 @@ public class ComplitionAssist implements ClientModInitializer {
 
     private static final Map<String, String> SHORTCUTS = new HashMap<>();
 
-    private static final EditBoxWidget lastEditBoxWidget = null;
-
     private static final String keyChar = ":";
-    private static boolean SUGGEST = false;
 
-    private static String sequence = "";
+    private static boolean SUGGEST = false;
+    private static String currentSequence = "";
 
     private static List<String> currentSuggestions = new ArrayList<>();
     private static List<String> displaySuggestions = new ArrayList<>();
@@ -104,7 +102,7 @@ public class ComplitionAssist implements ClientModInitializer {
         Set<String> startsWith = new LinkedHashSet<>();
         Set<String> containsOnly = new LinkedHashSet<>();
 
-        String inputLower = sequence.toLowerCase();
+        String inputLower = currentSequence.toLowerCase();
 
         // Один проход по всем сокращениям
         for (String shortcut : SHORTCUTS.keySet()) {
@@ -224,15 +222,15 @@ public class ComplitionAssist implements ClientModInitializer {
             SUGGEST = false;
             return;
         }
-        sequence = new_sequence;
+        currentSequence = new_sequence;
 
         // Get new render position
         var client = MinecraftClient.getInstance();
         if (client == null || client.textRenderer == null) return;
 
-        suggestionXpos = widgetX + widgetWidthBorder + client.textRenderer.getWidth(textBeforeCursor) - client.textRenderer.getWidth(sequence);
-        suggestionYcorrection = widgetHeight / 2;
-        suggestionYpos = widgetY + suggestionYcorrection - 1;
+        suggestionXpos = widgetX + widgetWidthBorder + client.textRenderer.getWidth(textBeforeCursor) - client.textRenderer.getWidth(currentSequence) - 3;
+        suggestionYcorrection = widgetHeight / 2 + 1;
+        suggestionYpos = widgetY - 2 + suggestionYcorrection;
 
         parseSuggestions();
         parseDisplaySuggestions();
@@ -257,7 +255,7 @@ public class ComplitionAssist implements ClientModInitializer {
             return;
         }
 
-        sequence = new_sequence;
+        currentSequence = new_sequence;
 
         // Get new render position
         var client = MinecraftClient.getInstance();
@@ -277,9 +275,10 @@ public class ComplitionAssist implements ClientModInitializer {
             a += client.textRenderer.getWidth(String.valueOf(c));
         }
 
-        suggestionXpos = widgetX + a - client.textRenderer.getWidth(new_sequence) - 5;
+        suggestionXpos = widgetX + a - client.textRenderer.getWidth(new_sequence) - 8;
         if (lineIndex == 1) suggestionXpos += 9;
-        suggestionYcorrection = 5;
+
+        suggestionYcorrection = 4;
         suggestionYpos = widgetY + (lineIndex * 9) + 1;
 
         parseSuggestions();
@@ -302,12 +301,20 @@ public class ComplitionAssist implements ClientModInitializer {
 
         int suggestionCount = displaySuggestions.size();
         int lineHeight = 10;
-        int totalHeight = suggestionCount * lineHeight;
+        int textHight = suggestionCount * lineHeight;
+
+        int borderColor = 0xFFaba9a2;
+        int textColor = 0xFFe37d10;
+        int backgroundColor = 0xB3000000;
+        int borderPadding = 2;
+        int borderWidth = 1;
+
+        int totalHeight = textHight + borderPadding * 2 + borderWidth * 2;
 
         int startYBelow = cursorY + suggestionYcorrection;
         int availableSpaceBelow = screenHeight - startYBelow;
 
-        int startYAbove = cursorY - suggestionYcorrection - totalHeight - 2;
+        int startYAbove = cursorY - suggestionYcorrection - totalHeight;
 
         int startY;
 
@@ -326,33 +333,45 @@ public class ComplitionAssist implements ClientModInitializer {
 
         if (maxWidth == 0) return;
 
-        int startX = cursorX;
         if (cursorX + maxWidth + 10 > screenWidth) {
-            startX = Math.max(10, cursorX - maxWidth - 10);
+            cursorX = Math.max(10, cursorX - maxWidth - 10);
         }
 
-        int bgX1 = startX - 1;
-        int bgY1 = startY - 3;
-        int bgX2 = startX + maxWidth + 2;
-        int bgY2 = startY + totalHeight + 2;
+        int totalWidth = maxWidth + borderPadding * 2 + borderWidth * 2;
 
-        context.fill(bgX1, bgY1, bgX2, bgY2, 0x95000000);
+        int bgX1 = cursorX;
+        int bgY1 = startY;
+        int bgX2 = cursorX + totalWidth;
+        int bgY2 = startY + totalHeight;
 
-        int textY = startY;
-        for (String displayText : displaySuggestions) {
-            context.drawText(client.textRenderer, displayText, startX, textY, 0xFFd67820, true);
+        context.fill(bgX1, bgY1, bgX2, bgY2, backgroundColor);
+        context.drawBorder(bgX1, bgY1, totalWidth, totalHeight, borderColor);
+
+        int textY = startY + borderPadding + borderWidth;
+        int textX = cursorX + borderPadding + borderWidth;
+
+        List<String> renderDisplaySuggestions;
+
+        if (startY == startYAbove) {
+            renderDisplaySuggestions = displaySuggestions.reversed();
+        } else {
+            renderDisplaySuggestions = displaySuggestions;
+        }
+
+        for (String displayText : renderDisplaySuggestions) {
+            context.drawText(client.textRenderer, displayText, textX, textY, textColor, true);
 
             textY += lineHeight;
         }
     }
 
-    public static void screenChanged() {
+    public static void suggestionsOFF() {
         SUGGEST = false;
     }
 
     private static void processReplacement(MinecraftClient client, String replacement) {
         // Симулируем Backspace для удаления двоеточия и последовательности
-        simulateBackspaces(client, sequence.length() + 1);
+        simulateBackspaces(client, currentSequence.length() + 1);
 
         // Вставляем замену
         simulateTextInput(client, replacement);

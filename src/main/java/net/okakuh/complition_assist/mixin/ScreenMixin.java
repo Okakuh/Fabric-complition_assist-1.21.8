@@ -14,19 +14,19 @@ public abstract class ScreenMixin {
     // Отслеживаем открытие экрана
     @Inject(method = "init(Lnet/minecraft/client/MinecraftClient;II)V", at = @At("HEAD"))
     private void onScreenInit(CallbackInfo ci) {
-        ComplitionAssist.screenChanged();
+        ComplitionAssist.suggestionsOFF();
     }
 
     // Отслеживаем закрытие экрана (когда экран закрывается)
     @Inject(method = "close", at = @At("HEAD"))
     private void onScreenClose(CallbackInfo ci) {
-        ComplitionAssist.screenChanged();
+        ComplitionAssist.suggestionsOFF();
     }
 
     // Также можно отследить, когда экран становится невидимым
     @Inject(method = "removed", at = @At("HEAD"))
     private void onScreenRemoved(CallbackInfo ci) {
-        ComplitionAssist.screenChanged();
+        ComplitionAssist.suggestionsOFF();
     }
 
     @Inject(method = "render", at = @At("TAIL"))
