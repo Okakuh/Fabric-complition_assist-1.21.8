@@ -28,9 +28,4 @@ public abstract class ScreenMixin {
     private void onScreenRemoved(CallbackInfo ci) {
         ComplitionAssist.suggestionsOFF();
     }
-
-    @Inject(method = "render", at = @At("TAIL"))
-    private void drawAfterWidget(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
-        ComplitionAssist.render(context);
-    }
 }

@@ -1,6 +1,7 @@
 package net.okakuh.complition_assist;
 
 import com.google.gson.JsonElement;
+import com.ibm.icu.impl.locale.LocaleObjectCache;
 import net.fabricmc.api.ClientModInitializer;
 
 import net.minecraft.client.MinecraftClient;
@@ -9,7 +10,9 @@ import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.widget.EditBoxWidget;
 import net.minecraft.client.gui.EditBox;
 
+import net.minecraft.client.util.SelectionManager;
 import net.minecraft.resource.ResourceType;
+import net.okakuh.complition_assist.mixin.AbstractSignEditScreenAccessor;
 import net.okakuh.complition_assist.mixin.KeyboardAccessor;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
@@ -280,6 +283,43 @@ public class ComplitionAssist implements ClientModInitializer {
 
         suggestionYcorrection = 4;
         suggestionYpos = widgetY + (lineIndex * 9) + 1;
+
+        parseSuggestions();
+        parseDisplaySuggestions();
+
+        SUGGEST = true;
+    }
+
+    public static void trigerSign(AbstractSignEditScreenAccessor accessor) {
+        int currentRow = accessor.getCurrentRow();
+        String[] messages = accessor.getMessages();
+        SelectionManager selectionManager = accessor.getSelectionManager();
+
+        String currentLine = messages[currentRow];
+        int cursorPos = selectionManager.getSelectionStart();
+
+        int widgetHeight = 10;
+
+        String textBeforeCursor = currentLine.substring(0, cursorPos);
+
+        String new_sequence = parseSequence(textBeforeCursor);
+        if (new_sequence.isEmpty()) {
+            SUGGEST = false;
+            return;
+        }
+        currentSequence = new_sequence;
+
+        // Get new render position
+        var client = MinecraftClient.getInstance();
+        if (client == null || client.textRenderer == null) return;
+
+        int lenPixcCurrLine = client.textRenderer.getWidth(currentLine);
+        int lenPixcBeforeCursor = client.textRenderer.getWidth(textBeforeCursor);
+        int xCursorOffsetFromLineCenter = (lenPixcCurrLine / 2) - (lenPixcCurrLine - lenPixcBeforeCursor);
+
+        suggestionXpos = xCursorOffsetFromLineCenter - client.textRenderer.getWidth(currentSequence) - 3;
+        suggestionYcorrection = (widgetHeight / 2) + 1;
+        suggestionYpos = ((currentRow + 1) * 9) + suggestionYcorrection - 4 * 9 + 5;
 
         parseSuggestions();
         parseDisplaySuggestions();
