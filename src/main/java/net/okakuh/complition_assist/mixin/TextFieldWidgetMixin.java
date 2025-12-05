@@ -15,10 +15,4 @@ public abstract class TextFieldWidgetMixin {
         TextFieldWidget widget = (TextFieldWidget)(Object)this;
         if (widget.isFocused()) ComplitionAssist.trigerTextFieldWidget(widget);
     }
-
-    @Inject(method = "renderWidget", at = @At("TAIL"))
-    private void complition_assist$drawAfterWidget(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
-        TextFieldWidget widget = (TextFieldWidget)(Object)this;
-        if (widget.isFocused()) ComplitionAssist.render(context);
-    }
 }

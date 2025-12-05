@@ -1,16 +1,19 @@
 package net.okakuh.complition_assist;
 
+import com.google.gson.JsonElement;
 import net.fabricmc.api.ClientModInitializer;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.gui.widget.EditBoxWidget;
+import net.minecraft.client.gui.EditBox;
 
+import net.minecraft.resource.ResourceType;
 import net.okakuh.complition_assist.mixin.KeyboardAccessor;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
@@ -37,7 +40,9 @@ public class ComplitionAssist implements ClientModInitializer {
 
     private static final Map<String, String> SHORTCUTS = new HashMap<>();
 
-    public static final String keyChar = ":";
+    private static final EditBoxWidget lastEditBoxWidget = null;
+
+    private static final String keyChar = ":";
     private static boolean SUGGEST = false;
 
     private static String sequence = "";
@@ -54,7 +59,7 @@ public class ComplitionAssist implements ClientModInitializer {
         initializeDefaultShortcuts();
 
         // Регистрация ResourceReloadListener
-        ResourceManagerHelper.get(net.minecraft.resource.ResourceType.CLIENT_RESOURCES).registerReloadListener(
+        ResourceManagerHelper.get(ResourceType.CLIENT_RESOURCES).registerReloadListener(
                 new SimpleSynchronousResourceReloadListener() {
                     @Override
                     public Identifier getFabricId() {
@@ -83,7 +88,7 @@ public class ComplitionAssist implements ClientModInitializer {
                 String suggestion = currentSuggestions.getFirst();
                 String replacement = getShortcutValue(suggestion);
                 if (replacement != null) {
-                    processReplacement(net.minecraft.client.MinecraftClient.getInstance(), replacement);
+                    processReplacement(MinecraftClient.getInstance(), replacement);
                 }
             }
         }
@@ -172,7 +177,7 @@ public class ComplitionAssist implements ClientModInitializer {
                     if (json.has("shortcuts")) {
                         JsonObject shortcutsObj = json.getAsJsonObject("shortcuts");
 
-                        for (Map.Entry<String, com.google.gson.JsonElement> entry : shortcutsObj.entrySet()) {
+                        for (Map.Entry<String, JsonElement> entry : shortcutsObj.entrySet()) {
                             String key = entry.getKey();
                             String value = entry.getValue().getAsString();
                             SHORTCUTS.put(key.toLowerCase(), value);
@@ -190,10 +195,8 @@ public class ComplitionAssist implements ClientModInitializer {
         }
     }
 
-    private static String parseSequence(String text, int cursorPosition) {
-        String textBeforeCursor = text.substring(0, cursorPosition);
-        // Проверяем есть ли в первой строке знак :
-        int colonIndex = textBeforeCursor.lastIndexOf(keyChar);
+    private static String parseSequence(String text) {
+        int colonIndex = text.lastIndexOf(keyChar);
         if (colonIndex == -1) return "";
 
         // Получаем текст между знаком : и концом строки (до курсора)
@@ -216,7 +219,7 @@ public class ComplitionAssist implements ClientModInitializer {
         String widgetText = widget.getText();
         String textBeforeCursor = widgetText.substring(0, widgetCursorPosition);
 
-        String new_sequence = parseSequence(widgetText, widgetCursorPosition);
+        String new_sequence = parseSequence(textBeforeCursor);
         if (new_sequence.isEmpty()) {
             SUGGEST = false;
             return;
@@ -224,12 +227,60 @@ public class ComplitionAssist implements ClientModInitializer {
         sequence = new_sequence;
 
         // Get new render position
-        var client = net.minecraft.client.MinecraftClient.getInstance();
+        var client = MinecraftClient.getInstance();
         if (client == null || client.textRenderer == null) return;
 
         suggestionXpos = widgetX + widgetWidthBorder + client.textRenderer.getWidth(textBeforeCursor) - client.textRenderer.getWidth(sequence);
         suggestionYcorrection = widgetHeight / 2;
-        suggestionYpos = widgetY + suggestionYcorrection;
+        suggestionYpos = widgetY + suggestionYcorrection - 1;
+
+        parseSuggestions();
+        parseDisplaySuggestions();
+
+        SUGGEST = true;
+    }
+
+    public static void trigerEditBoxWidget(EditBoxWidget widget, EditBox editBox) {
+        int lineIndex = editBox.getCurrentLineIndex() + 1;
+        String widgetText = widget.getText();
+
+        int widgetCursorPosition = editBox.getCursor();
+        int widgetX = widget.getX();
+        int widgetY = widget.getY();
+
+        String textBeforeCursor = widgetText.substring(0, widgetCursorPosition);
+
+        String new_sequence = parseSequence(textBeforeCursor);
+
+        if (new_sequence.isEmpty()) {
+            SUGGEST = false;
+            return;
+        }
+
+        sequence = new_sequence;
+
+        // Get new render position
+        var client = MinecraftClient.getInstance();
+        if (client == null || client.textRenderer == null) return;
+
+        int a = 0;
+
+        for (int i = 0; i < textBeforeCursor.length(); i++) {
+            char c = textBeforeCursor.charAt(i);
+
+            int f = client.textRenderer.getWidth(String.valueOf(c));
+
+            if (a + f > 114 || String.valueOf(c).contentEquals("\n")) {
+                a = 0;
+            }
+
+            a += client.textRenderer.getWidth(String.valueOf(c));
+        }
+
+        suggestionXpos = widgetX + a - client.textRenderer.getWidth(new_sequence) - 5;
+        if (lineIndex == 1) suggestionXpos += 9;
+        suggestionYcorrection = 5;
+        suggestionYpos = widgetY + (lineIndex * 9) + 1;
 
         parseSuggestions();
         parseDisplaySuggestions();
@@ -240,7 +291,7 @@ public class ComplitionAssist implements ClientModInitializer {
     private static void renderSuggestions(DrawContext context) {
         if (displaySuggestions == null || displaySuggestions.isEmpty()) return;
 
-        var client = net.minecraft.client.MinecraftClient.getInstance();
+        var client = MinecraftClient.getInstance();
         if (client == null || client.textRenderer == null) return;
 
         int cursorX = suggestionXpos;
@@ -250,13 +301,13 @@ public class ComplitionAssist implements ClientModInitializer {
         int screenHeight = client.getWindow().getScaledHeight();
 
         int suggestionCount = displaySuggestions.size();
-        int lineHeight = 12;
+        int lineHeight = 10;
         int totalHeight = suggestionCount * lineHeight;
 
         int startYBelow = cursorY + suggestionYcorrection;
         int availableSpaceBelow = screenHeight - startYBelow;
 
-        int startYAbove = cursorY - suggestionYcorrection - totalHeight - 6;
+        int startYAbove = cursorY - suggestionYcorrection - totalHeight - 2;
 
         int startY;
 
@@ -280,22 +331,16 @@ public class ComplitionAssist implements ClientModInitializer {
             startX = Math.max(10, cursorX - maxWidth - 10);
         }
 
-        int bgX1 = startX - 4;
-        int bgY1 = startY - 2;
-        int bgX2 = startX + maxWidth + 6;
+        int bgX1 = startX - 1;
+        int bgY1 = startY - 3;
+        int bgX2 = startX + maxWidth + 2;
         int bgY2 = startY + totalHeight + 2;
 
-        context.fill(bgX1, bgY1, bgX2, bgY2, 0x80000000);
-        context.drawBorder(bgX1, bgY1, maxWidth + 8, totalHeight + 4, 0xFFFFFFFF);
+        context.fill(bgX1, bgY1, bgX2, bgY2, 0x95000000);
 
-        int textY = startY + 2;
+        int textY = startY;
         for (String displayText : displaySuggestions) {
-            context.drawText(client.textRenderer, displayText, startX - 1, textY, 0xFF000000, false);
-            context.drawText(client.textRenderer, displayText, startX + 1, textY, 0xFF000000, false);
-            context.drawText(client.textRenderer, displayText, startX, textY - 1, 0xFF000000, false);
-            context.drawText(client.textRenderer, displayText, startX, textY + 1, 0xFF000000, false);
-
-            context.drawText(client.textRenderer, displayText, startX, textY, 0xFFFFFFFF, false);
+            context.drawText(client.textRenderer, displayText, startX, textY, 0xFFd67820, true);
 
             textY += lineHeight;
         }
@@ -331,5 +376,6 @@ public class ComplitionAssist implements ClientModInitializer {
             keyboard.invokeOnChar(window, (int) c, 0);
         }
     }
+
 
 }
