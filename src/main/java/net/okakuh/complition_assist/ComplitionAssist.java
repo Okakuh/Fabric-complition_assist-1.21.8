@@ -47,6 +47,7 @@ public class ComplitionAssist implements ClientModInitializer {
 
     private static boolean SUGGEST = false;
     private static String currentSequence = "";
+    private static boolean shouldUseScreenContext = false;
 
     private static List<String> currentSuggestions = new ArrayList<>();
     private static List<String> displaySuggestions = new ArrayList<>();
@@ -95,9 +96,9 @@ public class ComplitionAssist implements ClientModInitializer {
         }
     }
 
-    public static void render(DrawContext context) {
+    public static void render(DrawContext context, boolean isScrenContext) {
         if (SUGGEST) {
-            renderSuggestions(context);
+            if (isScrenContext == shouldUseScreenContext) renderSuggestions(context);
         }
     }
 
@@ -211,6 +212,7 @@ public class ComplitionAssist implements ClientModInitializer {
     }
 
     public static void trigerTextFieldWidget(TextFieldWidget widget) {
+        shouldUseScreenContext = false;
         int widgetX = widget.getX();
         int widgetY = widget.getY();
         int widgetHeight = widget.getHeight();
@@ -288,17 +290,17 @@ public class ComplitionAssist implements ClientModInitializer {
         parseDisplaySuggestions();
 
         SUGGEST = true;
+        shouldUseScreenContext = true;
     }
 
     public static void trigerSign(AbstractSignEditScreenAccessor accessor) {
+        shouldUseScreenContext = false;
         int currentRow = accessor.getCurrentRow();
         String[] messages = accessor.getMessages();
         SelectionManager selectionManager = accessor.getSelectionManager();
 
         String currentLine = messages[currentRow];
         int cursorPos = selectionManager.getSelectionStart();
-
-        int widgetHeight = 10;
 
         String textBeforeCursor = currentLine.substring(0, cursorPos);
 
@@ -317,9 +319,10 @@ public class ComplitionAssist implements ClientModInitializer {
         int lenPixcBeforeCursor = client.textRenderer.getWidth(textBeforeCursor);
         int xCursorOffsetFromLineCenter = (lenPixcCurrLine / 2) - (lenPixcCurrLine - lenPixcBeforeCursor);
 
+        int lineHeight = 10;
         suggestionXpos = xCursorOffsetFromLineCenter - client.textRenderer.getWidth(currentSequence) - 3;
-        suggestionYcorrection = (widgetHeight / 2) + 1;
-        suggestionYpos = ((currentRow + 1) * 9) + suggestionYcorrection - 4 * 9 + 5;
+        suggestionYcorrection = (lineHeight / 2) + 1;
+        suggestionYpos = ((currentRow + 1) * lineHeight) + suggestionYcorrection - 32;
 
         parseSuggestions();
         parseDisplaySuggestions();
@@ -406,6 +409,7 @@ public class ComplitionAssist implements ClientModInitializer {
     }
 
     public static void suggestionsOFF() {
+        shouldUseScreenContext = false;
         SUGGEST = false;
     }
 
@@ -435,6 +439,4 @@ public class ComplitionAssist implements ClientModInitializer {
             keyboard.invokeOnChar(window, (int) c, 0);
         }
     }
-
-
 }

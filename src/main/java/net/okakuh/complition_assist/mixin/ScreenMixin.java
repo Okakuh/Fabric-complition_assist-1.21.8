@@ -2,7 +2,7 @@ package net.okakuh.complition_assist.mixin;
 
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.gui.screen.ingame.BookEditScreen;
 import net.okakuh.complition_assist.ComplitionAssist;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -27,5 +27,10 @@ public abstract class ScreenMixin {
     @Inject(method = "removed", at = @At("HEAD"))
     private void onScreenRemoved(CallbackInfo ci) {
         ComplitionAssist.suggestionsOFF();
+    }
+
+    @Inject(method = "render", at = @At("RETURN"))
+    private void onRenderOverlay(DrawContext context, int mouseX, int mouseY, float deltaTicks, CallbackInfo ci) {
+        ComplitionAssist.render(context, true);
     }
 }

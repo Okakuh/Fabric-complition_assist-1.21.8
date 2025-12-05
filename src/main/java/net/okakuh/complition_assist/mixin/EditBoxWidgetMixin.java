@@ -50,4 +50,9 @@ public abstract class EditBoxWidgetMixin {
             );
         }
     }
+
+    @Inject(method = "renderOverlay", at = @At("RETURN"))
+    private void onRenderOverlay(DrawContext context, CallbackInfo ci) {
+        ComplitionAssist.render(context, false);
+    }
 }

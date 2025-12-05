@@ -2,7 +2,6 @@ package net.okakuh.complition_assist.mixin;
 
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.render.RenderTickCounter;
 import net.okakuh.complition_assist.ComplitionAssist;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -19,6 +18,6 @@ public abstract class TextFieldWidgetMixin {
 
     @Inject(method = "renderWidget", at = @At("TAIL"))
     private void complition_assist$onHudRender(DrawContext context, int mouseX, int mouseY, float deltaTicks, CallbackInfo ci) {
-        ComplitionAssist.render(context);
+        ComplitionAssist.render(context, false);
     }
 }
