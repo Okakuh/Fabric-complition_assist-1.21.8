@@ -12,7 +12,7 @@ public abstract class KeyboardMixin {
     @Inject(method = "onKey", at = @At("HEAD"))
     private void onKey(long window, int key, int scancode, int action, int modifiers, CallbackInfo ci) {
         if (action == 1 || action == 2) { // И первое нажатие, и повтор при удержании
-            ComplitionAssist.onKeyPresed(key, modifiers);
+            ComplitionAssist.onKeyPressed(key, modifiers);
         }
     }
 }

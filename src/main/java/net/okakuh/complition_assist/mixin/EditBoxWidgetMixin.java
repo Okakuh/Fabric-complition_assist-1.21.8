@@ -1,9 +1,8 @@
 package net.okakuh.complition_assist.mixin;
 
-import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.EditBox;
 import net.minecraft.client.gui.widget.EditBoxWidget;
-import net.okakuh.complition_assist.ComplitionAssist;
+import net.okakuh.complition_assist.Handlers;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -19,10 +18,7 @@ public abstract class EditBoxWidgetMixin {
         EditBoxWidget widget = (EditBoxWidget)(Object)this;
 
         if (widget.isFocused() && this.editBox != null) {
-            ComplitionAssist.trigerEditBoxWidget(
-                    widget,
-                    this.editBox
-            );
+            Handlers.EditBoxWidgetHandler(widget, this.editBox);
         }
     }
 
@@ -31,10 +27,7 @@ public abstract class EditBoxWidgetMixin {
         EditBoxWidget widget = (EditBoxWidget)(Object)this;
 
         if (widget.isFocused() && this.editBox != null) {
-            ComplitionAssist.trigerEditBoxWidget(
-                    widget,
-                    this.editBox
-            );
+            Handlers.EditBoxWidgetHandler(widget, this.editBox);
         }
     }
 
@@ -44,15 +37,7 @@ public abstract class EditBoxWidgetMixin {
         EditBoxWidget widget = (EditBoxWidget)(Object)this;
 
         if (focused && this.editBox != null) {
-            ComplitionAssist.trigerEditBoxWidget(
-                    widget,
-                    this.editBox
-            );
+            Handlers.EditBoxWidgetHandler(widget, this.editBox);
         }
-    }
-
-    @Inject(method = "renderOverlay", at = @At("RETURN"))
-    private void onRenderOverlay(DrawContext context, CallbackInfo ci) {
-        ComplitionAssist.render(context, false);
     }
 }
