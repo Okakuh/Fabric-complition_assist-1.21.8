@@ -2,19 +2,15 @@ package net.okakuh.complition_assist;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.EditBox;
-import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.EditBoxWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.util.SelectionManager;
 import net.okakuh.complition_assist.mixin.AbstractSignEditScreenAccessor;
 
-import java.awt.event.ComponentListener;
-
 import static net.okakuh.complition_assist.Util.parseSequence;
 
 public class Handlers {
     public static void TextFieldWidgetHandler(TextFieldWidget widget) {
-
         String keyChar = Suggestions.getKeyChar();
         int widgetX = widget.getX();
         int widgetY = widget.getY();

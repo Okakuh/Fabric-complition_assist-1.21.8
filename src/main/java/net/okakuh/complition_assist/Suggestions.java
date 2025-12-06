@@ -2,10 +2,6 @@ package net.okakuh.complition_assist;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.util.SelectionManager;
-import net.minecraft.screen.ScreenTexts;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,10 +19,9 @@ public class Suggestions {
 
     // Состояния подсказочника
     private static boolean SUGGEST = false;
-    private static Object LAST_SOURCE = null;
 
     // Какой источник DrawContext нужно использовать для рендера
-    private static boolean shouldScreenAsRenderTrigger = false;
+    private static boolean shouldUseScreenDrawContext = false;
 
     // Подсказки
     private static String sequence = "";
@@ -51,7 +46,6 @@ public class Suggestions {
     private static final int textColor = 0xFFe37d10;
     private static final int backgroundColor = 0xB3000000;
 
-
     public static void add(String key, String value) {
         suggestionsALL.put(key, value);
     }
@@ -61,12 +55,12 @@ public class Suggestions {
     }
 
     public static void OFF() {
-        shouldScreenAsRenderTrigger = false;
+        shouldUseScreenDrawContext = false;
         SUGGEST = false;
     }
 
-    public static void ON(boolean useScreenAsRenderTrigger) {
-        shouldScreenAsRenderTrigger = useScreenAsRenderTrigger;
+    public static void ON(boolean useScreenDrawContext) {
+        shouldUseScreenDrawContext = useScreenDrawContext;
         SUGGEST = true;
     }
 
@@ -75,7 +69,7 @@ public class Suggestions {
     }
 
     public static boolean isUsingScreenDrawContext() {
-        return shouldScreenAsRenderTrigger;
+        return shouldUseScreenDrawContext;
     }
 
     public static String getReplacement() {
