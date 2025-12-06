@@ -11,15 +11,23 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(TextFieldWidget.class)
 public abstract class TextFieldWidgetMixin {
-    @Inject(method = "onChanged", at = @At("HEAD"))
-    private void onChanged(String newText, CallbackInfo ci) {
-        TextFieldWidget widget = (TextFieldWidget)(Object)this;
-        if (widget.isFocused()) Handlers.TextFieldWidgetHandler(widget);
+    @Inject(method = "onChanged", at = @At("RETURN"))
+    private void complition_assist$onChanged(String newText, CallbackInfo ci) {
+        Handlers.TextFieldWidgetHandler((TextFieldWidget)(Object)this);
     }
 
-    @Inject(method = "renderWidget", at = @At("TAIL"))
+    @Inject(method = "setFocused", at = @At("RETURN"))
+    private void complition_assist$setFocused(boolean focused, CallbackInfo ci) {
+        if (focused) {
+            Handlers.TextFieldWidgetHandler((TextFieldWidget)(Object)this);
+        } else {
+            Suggestions.OFF();
+        }
+    }
+
+    @Inject(method = "renderWidget", at = @At("RETURN"))
     private void complition_assist$onHudRender(DrawContext context, int mouseX, int mouseY, float deltaTicks, CallbackInfo ci) {
         TextFieldWidget widget = (TextFieldWidget)(Object)this;
-        if (widget.isFocused()) Suggestions.tryRender(context, widget);
+        if (widget.isFocused()) Suggestions.tryRender(context);
     }
 }

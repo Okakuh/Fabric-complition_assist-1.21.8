@@ -10,28 +10,25 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Screen.class)
 public abstract class ScreenMixin {
-    // Отслеживаем открытие экрана
     @Inject(method = "init(Lnet/minecraft/client/MinecraftClient;II)V", at = @At("HEAD"))
-    private void onScreenInit(CallbackInfo ci) {
+    private void complition_assist$onScreenInit(CallbackInfo ci) {
         Suggestions.OFF();
     }
 
-    // Отслеживаем закрытие экрана (когда экран закрывается)
     @Inject(method = "close", at = @At("HEAD"))
-    private void onScreenClose(CallbackInfo ci) {
+    private void complition_assist$onScreenClose(CallbackInfo ci) {
         Suggestions.OFF();
     }
 
-    // Также можно отследить, когда экран становится невидимым
     @Inject(method = "removed", at = @At("HEAD"))
-    private void onScreenRemoved(CallbackInfo ci) {
+    private void complition_assist$onScreenRemoved(CallbackInfo ci) {
         Suggestions.OFF();
     }
 
     @Inject(method = "render", at = @At("RETURN"))
-    private void onRenderOverlay(DrawContext context, int mouseX, int mouseY, float deltaTicks, CallbackInfo ci) {
+    private void complition_assist$onRenderOverlay(DrawContext context, int mouseX, int mouseY, float deltaTicks, CallbackInfo ci) {
         if (Suggestions.isUsingScreenDrawContext()) {
-            Suggestions.tryRender(context, null);
+            Suggestions.tryRender(context);
         }
     }
 }

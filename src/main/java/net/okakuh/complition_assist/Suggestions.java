@@ -2,7 +2,10 @@ package net.okakuh.complition_assist;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.util.SelectionManager;
+import net.minecraft.screen.ScreenTexts;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,7 +23,7 @@ public class Suggestions {
 
     // Состояния подсказочника
     private static boolean SUGGEST = false;
-    private static Object WIDGET = null;
+    private static Object LAST_SOURCE = null;
 
     // Какой источник DrawContext нужно использовать для рендера
     private static boolean shouldScreenAsRenderTrigger = false;
@@ -132,14 +135,7 @@ public class Suggestions {
         if (cordX + WIDTH > screenWidth) cordX -= WIDTH;
     }
 
-    public static void tryRender(DrawContext context, Object source) {
-        // Проверка изменился ли виджет
-        if (source != WIDGET && source instanceof TextFieldWidget) {
-            OFF();
-            WIDGET = source;
-            Handlers.TextFieldWidgetHandler((TextFieldWidget) source);
-        }
-
+    public static void tryRender(DrawContext context) {
         if (SUGGEST) {
             if (displaySuggestionsForSequence == null || displaySuggestionsForSequence.isEmpty()) return;
             render(context);

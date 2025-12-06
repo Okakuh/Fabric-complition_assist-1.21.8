@@ -14,14 +14,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class AbstractSignEditScreenMixin {
 
     @Inject(method = "init", at = @At("RETURN"))
-    private void onInit(CallbackInfo ci) {
+    private void complition_assist$onInit(CallbackInfo ci) {
         AbstractSignEditScreen screen = (AbstractSignEditScreen)(Object)this;
         var accessor = (AbstractSignEditScreenAccessor) screen;
         Handlers.SignScreenHandler(accessor);
     }
 
     @Inject(method = "keyPressed", at = @At("RETURN"))
-    private void onKeyPressed(int keyCode, int scanCode, int modifiers,
+    private void complition_assist$onKeyPressed(int keyCode, int scanCode, int modifiers,
                                                 CallbackInfoReturnable<Boolean> cir) {
         AbstractSignEditScreen screen = (AbstractSignEditScreen)(Object)this;
         var accessor = (AbstractSignEditScreenAccessor) screen;
@@ -29,16 +29,14 @@ public abstract class AbstractSignEditScreenMixin {
     }
 
     @Inject(method = "charTyped", at = @At("RETURN"))
-    private void charTyped(char chr, int modifiers, CallbackInfoReturnable<Boolean> cir) {
+    private void complition_assist$charTyped(char chr, int modifiers, CallbackInfoReturnable<Boolean> cir) {
         AbstractSignEditScreen screen = (AbstractSignEditScreen)(Object)this;
         var accessor = (AbstractSignEditScreenAccessor) screen;
         Handlers.SignScreenHandler(accessor);
     }
 
     @Inject(method = "renderSignText", at = @At("RETURN"))
-    private void onHudRender(DrawContext context, CallbackInfo ci) {
-        AbstractSignEditScreen screen = (AbstractSignEditScreen)(Object)this;
-        var accessor = (AbstractSignEditScreenAccessor) screen;
-        Suggestions.tryRender(context, null);
+    private void complition_assist$renderSignText(DrawContext context, CallbackInfo ci) {
+        Suggestions.tryRender(context);
     }
 }

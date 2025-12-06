@@ -8,10 +8,13 @@ import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.util.SelectionManager;
 import net.okakuh.complition_assist.mixin.AbstractSignEditScreenAccessor;
 
+import java.awt.event.ComponentListener;
+
 import static net.okakuh.complition_assist.Util.parseSequence;
 
 public class Handlers {
     public static void TextFieldWidgetHandler(TextFieldWidget widget) {
+
         String keyChar = Suggestions.getKeyChar();
         int widgetX = widget.getX();
         int widgetY = widget.getY();
