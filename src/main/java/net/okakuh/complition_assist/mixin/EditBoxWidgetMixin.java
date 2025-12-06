@@ -3,6 +3,7 @@ package net.okakuh.complition_assist.mixin;
 import net.minecraft.client.gui.EditBox;
 import net.minecraft.client.gui.widget.EditBoxWidget;
 import net.okakuh.complition_assist.Handlers;
+import net.okakuh.complition_assist.Suggestions;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -37,6 +38,7 @@ public abstract class EditBoxWidgetMixin {
         EditBoxWidget widget = (EditBoxWidget)(Object)this;
 
         if (focused && this.editBox != null) {
+            Suggestions.OFF();
             Handlers.EditBoxWidgetHandler(widget, this.editBox);
         }
     }

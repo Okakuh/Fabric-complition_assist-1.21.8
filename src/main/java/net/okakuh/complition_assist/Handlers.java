@@ -2,6 +2,7 @@ package net.okakuh.complition_assist;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.EditBox;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.EditBoxWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.util.SelectionManager;

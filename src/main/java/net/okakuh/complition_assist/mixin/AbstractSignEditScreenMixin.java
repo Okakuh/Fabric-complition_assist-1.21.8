@@ -37,6 +37,8 @@ public abstract class AbstractSignEditScreenMixin {
 
     @Inject(method = "renderSignText", at = @At("RETURN"))
     private void onHudRender(DrawContext context, CallbackInfo ci) {
-        Suggestions.tryRender(context);
+        AbstractSignEditScreen screen = (AbstractSignEditScreen)(Object)this;
+        var accessor = (AbstractSignEditScreenAccessor) screen;
+        Suggestions.tryRender(context, null);
     }
 }

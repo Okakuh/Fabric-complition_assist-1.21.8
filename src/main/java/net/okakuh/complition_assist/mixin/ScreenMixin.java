@@ -31,7 +31,7 @@ public abstract class ScreenMixin {
     @Inject(method = "render", at = @At("RETURN"))
     private void onRenderOverlay(DrawContext context, int mouseX, int mouseY, float deltaTicks, CallbackInfo ci) {
         if (Suggestions.isUsingScreenDrawContext()) {
-            Suggestions.tryRender(context);
+            Suggestions.tryRender(context, null);
         }
     }
 }
