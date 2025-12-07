@@ -43,7 +43,7 @@ public class Suggestions {
 
     // Цвета
     private static final int borderColor = 0xFFaba9a2;
-    private static final int textColor = 0xFFe37d10;
+    private static final int textColor = 0xFFFFFFFF;
     private static final int backgroundColor = 0xB3000000;
 
     public static void add(String key, String value) {

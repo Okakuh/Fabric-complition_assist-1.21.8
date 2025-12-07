@@ -78,7 +78,7 @@ public class Util {
         for (String suggestion : suggestions) {
             String fullText = shortcuts.get(suggestion);
             if (fullText != null) {
-                String displayText = suggestion + " → " + fullText;
+                String displayText = suggestion + "  → " + fullText;
                 displayList.add(displayText);
             }
         }
