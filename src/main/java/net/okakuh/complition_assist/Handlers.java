@@ -7,6 +7,8 @@ import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.util.SelectionManager;
 import net.okakuh.complition_assist.mixin.AbstractSignEditScreenAccessor;
 
+import java.util.regex.*;
+
 import static net.okakuh.complition_assist.Util.parseSequence;
 
 public class Handlers {
@@ -41,15 +43,21 @@ public class Handlers {
 
     public static void EditBoxWidgetHandler(EditBoxWidget widget, EditBox editBox) {
         String keyChar = Suggestions.getKeyChar();
-        int lineIndex = editBox.getCurrentLineIndex() + 1;
+
+        int currentCursorLineIndex = editBox.getCurrentLineIndex();
+        String line = String.valueOf(editBox.getLine(currentCursorLineIndex));
+        Pattern pattern = Pattern.compile("beginIndex=(\\d+), endIndex=(\\d+)");
+        Matcher matcher = pattern.matcher(line);
+
+        int rowBeginIndex = 0;
+        if (matcher.find()) {
+            rowBeginIndex = Integer.parseInt(matcher.group(1));
+        }
+
         String widgetText = widget.getText();
-
         int widgetCursorPosition = editBox.getCursor();
-        int widgetX = widget.getX();
-        int widgetY = widget.getY();
 
-        String textBeforeCursor = widgetText.substring(0, widgetCursorPosition);
-
+        String textBeforeCursor = widgetText.substring(rowBeginIndex, widgetCursorPosition);
         String new_sequence = parseSequence(textBeforeCursor, keyChar);
 
         if (new_sequence.isEmpty()) {
@@ -57,29 +65,18 @@ public class Handlers {
             return;
         }
 
-        // Get new render position
         var client = MinecraftClient.getInstance();
         if (client == null || client.textRenderer == null) return;
 
-        int a = 0;
+        // Высчитываем позицию курсора
+        int widgetX = widget.getX();
+        int widgetY = widget.getY();
 
-        for (int i = 0; i < textBeforeCursor.length(); i++) {
-            char c = textBeforeCursor.charAt(i);
 
-            int f = client.textRenderer.getWidth(String.valueOf(c));
-
-            if (a + f > 114 || String.valueOf(c).contentEquals("\n")) {
-                a = 0;
-            }
-
-            a += client.textRenderer.getWidth(String.valueOf(c));
-        }
-
-        int X = widgetX + a - 8;
-        if (lineIndex == 1) X += 9;
-
+        int X = widgetX + client.textRenderer.getWidth(textBeforeCursor) + 1;
         int YOffset = 4;
-        int Y = widgetY + (lineIndex * 9) + 1;
+        int Y = widgetY + ((currentCursorLineIndex + 1) * 9) + 1;
+
         Suggestions.setNewRenderData(new_sequence, X, Y, YOffset);
         Suggestions.ON(true);
     }
