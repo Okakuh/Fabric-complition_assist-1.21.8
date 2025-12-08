@@ -8,8 +8,7 @@
     import java.util.List;
     import java.util.Map;
 
-    import static net.okakuh.complition_assist.Util.parseDisplaySuggestions;
-    import static net.okakuh.complition_assist.Util.parseSuggestions;
+    import static net.okakuh.complition_assist.Util.*;
 
     public class Suggestions {
         // Все загруженные подсказки
@@ -31,10 +30,11 @@
         // Инфа для рендера
 
         // Позиция подсказок
-        private static int cordX = 0;
-        private static int cordY = 0;
-        private static int WIDTH = 0;
-        private static int HEIGHT = 0;
+        private static boolean isDisplaySuggestionsMirrored = false;
+        private static int SUGGESTIONS_X = 0;
+        private static int SUGGESTIONS_Y = 0;
+        private static int SUGGESTIONS_WIDTH = 0;
+        private static int SUGGESTIONS_HEIGHT = 0;
 
         // Отступы, ширина гранцы и высота строки подсказок
         private static final int borderPadding = 2;
@@ -88,9 +88,9 @@
             displaySuggestionsForSequence = parseDisplaySuggestions(suggestionsForSequence, suggestionsALL);
 
             // Координата Х для рендера подсказок
-            cordX = X;
+            SUGGESTIONS_X = X;
             // Координата У для рендера подсказок
-            cordY = Y;
+            SUGGESTIONS_Y = Y;
 
             // Определение высоты и ширины с фоном и границей
             // Высота
@@ -105,11 +105,11 @@
                 maxWidth = Math.max(maxWidth, client.textRenderer.getWidth(displayText));
             }
 
-            HEIGHT = suggestionsHeight + (borderPadding * 2) + (borderWidth * 2);
-            WIDTH = maxWidth + (borderPadding * 2) + (borderWidth * 2);
+            SUGGESTIONS_HEIGHT = suggestionsHeight + (borderPadding * 2) + (borderWidth * 2);
+            SUGGESTIONS_WIDTH = maxWidth + (borderPadding * 2) + (borderWidth * 2);
 
             // Сдвиг по Х для рендера подсказок красиво символ в символ под текстом
-            cordX -= client.textRenderer.getWidth(sequence);
+            SUGGESTIONS_X -= client.textRenderer.getWidth(sequence);
 
             // Добавляем защиту от рендера вне экрана
 
@@ -117,28 +117,32 @@
             int screenHeight = client.getWindow().getScaledHeight();
 
             // По высоте
-            if ((screenHeight - (cordY + YOffset)) > HEIGHT) {
-                cordY += YOffset;
+            if ((screenHeight - (SUGGESTIONS_Y + YOffset)) > SUGGESTIONS_HEIGHT) {
+                SUGGESTIONS_Y += YOffset;
+                isDisplaySuggestionsMirrored = false;
             } else {
-                cordY -= (YOffset + HEIGHT);
+                isDisplaySuggestionsMirrored = true;
+                SUGGESTIONS_Y -= (YOffset + SUGGESTIONS_HEIGHT);
+
                 // Отзеркаливаем список если будем рендерить подсказки сверху
                 // Чтобы первое предложение на замену было снизу
                 displaySuggestionsForSequence = displaySuggestionsForSequence.reversed();
             }
             // По ширине
-            if (cordX + WIDTH > screenWidth) cordX -= WIDTH;
+            if (SUGGESTIONS_X + SUGGESTIONS_WIDTH > screenWidth) SUGGESTIONS_X -= SUGGESTIONS_WIDTH;
         }
 
         private static void render(DrawContext context) {
             var client = MinecraftClient.getInstance();
             // Рендер фона
-            context.fill(cordX, cordY, cordX + WIDTH, cordY + HEIGHT, backgroundColor);
+            context.fill(SUGGESTIONS_X, SUGGESTIONS_Y, SUGGESTIONS_X + SUGGESTIONS_WIDTH,
+                    SUGGESTIONS_Y + SUGGESTIONS_HEIGHT, backgroundColor);
             // Рендер гриницы
-            context.drawBorder(cordX, cordY, WIDTH, HEIGHT, borderColor);
+            context.drawBorder(SUGGESTIONS_X, SUGGESTIONS_Y, SUGGESTIONS_WIDTH, SUGGESTIONS_HEIGHT, borderColor);
 
             // Стдвиг текста относительно начала рендера с учетом ширины границы и отступа от границы
-            int textY = cordY + borderPadding + borderWidth;
-            int textX = cordX + borderPadding + borderWidth;
+            int textY = SUGGESTIONS_Y + borderPadding + borderWidth;
+            int textX = SUGGESTIONS_X + borderPadding + borderWidth;
 
             // Рендер текста
             for (String displayText : displaySuggestionsForSequence) {
@@ -152,5 +156,25 @@
                 if (displaySuggestionsForSequence == null || displaySuggestionsForSequence.isEmpty()) return;
                 render(context);
             }
+        }
+
+        public static void onMouseClick(double mouseX, double mouseY) {
+            int extra = borderWidth + borderPadding;
+            int Y2 = SUGGESTIONS_Y + SUGGESTIONS_HEIGHT - extra;
+
+            if (SUGGESTIONS_X + extra > mouseX || mouseX > SUGGESTIONS_X + SUGGESTIONS_WIDTH - extra) return;
+            if (SUGGESTIONS_Y + extra > mouseY || mouseY > Y2) return;
+
+            float OffsetFromBottom = (float) (Y2 - mouseY) / lineHeight;
+
+            int index = (int) Math.floor(OffsetFromBottom);
+            if (!isDisplaySuggestionsMirrored)
+                index = suggestionsForSequence.size() - (index + 1);
+
+            MinecraftClient client = MinecraftClient.getInstance();
+
+            String replacement = suggestionsALL.get(suggestionsForSequence.get(index));
+
+            processReplacement(client, sequence, replacement);
         }
     }

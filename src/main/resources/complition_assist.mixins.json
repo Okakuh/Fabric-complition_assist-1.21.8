@@ -10,7 +10,8 @@
     "AbstractSignEditScreenMixin",
     "AbstractSignEditScreenAccessor",
     "KeyboardMixin",
-    "KeyboardAccessor"
+    "KeyboardAccessor",
+    "MouseClickMixin"
   ],
   "injectors": {
     "defaultRequire": 1
