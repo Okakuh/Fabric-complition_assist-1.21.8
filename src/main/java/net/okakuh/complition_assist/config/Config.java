@@ -8,7 +8,7 @@ import java.io.*;
 import java.nio.file.*;
 
 public class Config {
-    private static final Path CONFIG_PATH = FabricLoader.getInstance().getConfigDir().resolve("yourmod.json");
+    private static final Path CONFIG_PATH = FabricLoader.getInstance().getConfigDir().resolve("complition_assist.json");
     private static Config INSTANCE;
 
     // Единственная настройка - включение/выключение мода

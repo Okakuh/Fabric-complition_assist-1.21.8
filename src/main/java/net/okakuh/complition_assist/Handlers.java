@@ -74,8 +74,8 @@ public class Handlers {
 
 
         int X = widgetX + client.textRenderer.getWidth(textBeforeCursor) + 1;
-        int YOffset = 4;
-        int Y = widgetY + ((currentCursorLineIndex + 1) * 9) + 1;
+        int YOffset = 5;
+        int Y = widgetY + ((currentCursorLineIndex + 1) * 9);
 
         Suggestions.setNewRenderData(new_sequence, X, Y, YOffset);
         Suggestions.ON(true);
