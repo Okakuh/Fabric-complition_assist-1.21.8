@@ -2,6 +2,7 @@ package net.okakuh.complition_assist.mixin;
 
 import net.minecraft.client.gui.EditBox;
 import net.minecraft.client.gui.widget.EditBoxWidget;
+import net.okakuh.complition_assist.ComplitionAssist;
 import net.okakuh.complition_assist.Handlers;
 import net.okakuh.complition_assist.Suggestions;
 import org.spongepowered.asm.mixin.Mixin;
@@ -16,6 +17,7 @@ public abstract class EditBoxWidgetMixin {
     private EditBox editBox;
     @Inject(method = "setText(Ljava/lang/String;Z)V", at = @At("TAIL"))
     private void onTextChanged(String text, boolean allowOverflow, CallbackInfo ci) {
+        if (ComplitionAssist.isNotWorking()) return;
         EditBoxWidget widget = (EditBoxWidget)(Object)this;
 
         if (widget.isFocused() && this.editBox != null) {
@@ -25,6 +27,7 @@ public abstract class EditBoxWidgetMixin {
 
     @Inject(method = "onCursorChange()V", at = @At("TAIL"))
     private void onCursorChange(CallbackInfo ci) {
+        if (ComplitionAssist.isNotWorking()) return;
         EditBoxWidget widget = (EditBoxWidget)(Object)this;
 
         if (widget.isFocused() && this.editBox != null) {
@@ -35,6 +38,7 @@ public abstract class EditBoxWidgetMixin {
     // Ловим изменение фокуса
     @Inject(method = "setFocused", at = @At("TAIL"))
     private void onFocusChanged(boolean focused, CallbackInfo ci) {
+        if (ComplitionAssist.isNotWorking()) return;
         EditBoxWidget widget = (EditBoxWidget)(Object)this;
 
         if (focused && this.editBox != null) {

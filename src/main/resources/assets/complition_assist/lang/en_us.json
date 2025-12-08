@@ -1,0 +1,6 @@
+{
+  "title.complition_assist.config": "Complition Assist Configuration",
+  "category.complition_assist.general": "General",
+  "option.complition_assist.mod_enabled": "Enable Complition Assist",
+  "tooltip.complition_assist.mod_enabled": "Enables mod functionality"
+}

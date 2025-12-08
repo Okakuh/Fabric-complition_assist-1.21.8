@@ -1,23 +1,30 @@
 {
   "schemaVersion": 1,
   "id": "complition_assist",
-  "version": "${version}",
-  "name": "ComplitionAssist",
-  "description": "Автодополнение сокращений по нажатию Tab",
-  "authors": ["Okakuh"],
+  "version": "1.0.0",
+  "name": "Complition Assist",
+  "description": "Auto-completion assistant for Minecraft",
+  "authors": ["okakuh"],
+  "contact": {},
   "license": "MIT",
+  "icon": "assets/complition_assist/icon.png",
   "environment": "client",
   "entrypoints": {
-    "client": [
-      "net.okakuh.complition_assist.ComplitionAssist"
-    ]
+    "client": ["net.okakuh.complition_assist.ComplitionAssist"],
+    "modmenu": ["net.okakuh.complition_assist.integration.ModMenuIntegration"],
+    "cloth-config2": ["net.okakuh.complition_assist.config.ModConfigScreen"]
+  },
+  "depends": {
+    "fabricloader": ">=0.15.0",
+    "minecraft": "~1.21.8",
+    "fabric-api": "*",
+    "java": ">=21"
+  },
+  "suggests": {
+    "modmenu": "*",
+    "cloth-config": "*"
   },
   "mixins": [
     "complition_assist.mixins.json"
-  ],
-  "depends": {
-    "fabricloader": ">=0.16.9",
-    "minecraft": "~1.21.8",
-    "fabric-api": "*"
-  }
+  ]
 }

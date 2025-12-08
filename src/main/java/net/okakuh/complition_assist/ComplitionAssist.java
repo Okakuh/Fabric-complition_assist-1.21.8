@@ -32,6 +32,8 @@ public class ComplitionAssist implements ClientModInitializer {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Identifier SHORTCUTS_ID = Identifier.of("complition_assist", "suggestions.json");
 
+    private static boolean WORKING = true;
+
     @Override
     public void onInitializeClient() {
         // Регистрация ResourceReloadListener
@@ -54,7 +56,8 @@ public class ComplitionAssist implements ClientModInitializer {
         boolean shiftPressed = (modifiers & 1) != 0;
         boolean spacePressed = keyCode == 32;
 
-        if (Suggestions.isON()) {
+
+        if (Suggestions.isON() && WORKING) {
             if (shiftPressed && spacePressed) {
                 String sequence = Suggestions.getSequence();
                 String replacement = Suggestions.getReplacement();
@@ -99,5 +102,14 @@ public class ComplitionAssist implements ClientModInitializer {
         } catch (Exception e) {
             LOGGER.error("Error loading shortcuts", e);
         }
+    }
+
+    public static boolean isNotWorking() {
+        return !WORKING;
+    }
+
+    public static void setWorking(boolean working) {
+        WORKING = working;
+        if (!WORKING) Suggestions.OFF();
     }
 }

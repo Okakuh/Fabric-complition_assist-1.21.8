@@ -1,0 +1,6 @@
+{
+  "title.complition_assist.config": "Настройки Complition Assist",
+  "category.complition_assist.general": "Основные",
+  "option.complition_assist.mod_enabled": "Включить Complition Assist",
+  "tooltip.complition_assist.mod_enabled": "Включает или выключает функционал мода"
+}
