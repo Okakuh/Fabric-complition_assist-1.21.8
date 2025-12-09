@@ -45,7 +45,7 @@ public class Handlers {
             textY -= (minHeightBelow - spaceBelow);
 
         Suggestions.setNewRenderData(new_sequence, X, Y, YOffset, textY, 0xFF333333);
-        Suggestions.ON(false);
+        Suggestions.ON(true);
     }
 
     public static void EditBoxWidgetHandler(EditBoxWidget widget, EditBox editBox) {
