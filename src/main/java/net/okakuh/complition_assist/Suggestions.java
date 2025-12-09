@@ -38,6 +38,7 @@
         private static int SUGGESTIONS_Y = 0;
         private static int SUGGESTIONS_WIDTH = 0;
         private static int SUGGESTIONS_HEIGHT = 0;
+        private static int sTextY = 0;
 
         // Отступы, ширина гранцы и высота строки подсказок
         private static final int borderPadding = 2;
@@ -47,7 +48,7 @@
         // Цвета
         private static final int borderColor = 0xFFaba9a2;
         private static final int textColor = 0xFFFFFFFF;
-        private static final int inRowTextColor = 0xFF333333;
+        private static int inRowTextColor = 0xFF333333;
         private static final int backgroundColor = 0xB3000000;
 
         public static void add(String key, String value) {
@@ -86,7 +87,9 @@
             return keyChar;
         }
 
-        public static void setNewRenderData(String newSequence, int X, int Y, int widgetYOffset) {
+        public static void setNewRenderData(String newSequence, int X, int Y, int widgetYOffset, int textY, int inRowTextColor1) {
+            sTextY = textY;
+            inRowTextColor = inRowTextColor1;
             cursorX = X;
             cursorY = Y;
 
@@ -153,17 +156,11 @@
             int textY = SUGGESTIONS_Y + borderPadding + borderWidth;
             int textX = SUGGESTIONS_X + borderPadding + borderWidth;
 
-            int index = 0;
-
-            if (isDisplaySuggestionsMirrored) {
-                index = displaySuggestionsForSequence.size() - 1;
-            }
-
-            String inRowSuggestion = displaySuggestionsForSequence.get(index);
+            String inRowSuggestion = suggestionsForSequence.getFirst();
             String stripedInRowSuggestion = inRowSuggestion.substring(sequence.length());
 
             context.drawText(client.textRenderer,
-                    stripedInRowSuggestion, cursorX + 3, cursorY - 6, inRowTextColor, true);
+                    stripedInRowSuggestion, cursorX + 3, sTextY, inRowTextColor, false);
 
             // Рендер текста
             for (String displayText : displaySuggestionsForSequence) {

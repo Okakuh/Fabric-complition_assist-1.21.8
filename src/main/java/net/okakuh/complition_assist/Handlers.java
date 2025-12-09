@@ -36,8 +36,15 @@ public class Handlers {
         int X = widgetX + widgetWidthBorder + client.textRenderer.getWidth(textBeforeCursor) - 3;
         int YOffset = widgetHeight / 2;
         int Y = widgetY + YOffset;
+        int textY = widgetY + (int) Math.floor((double) (widgetHeight - 7) / 2);
 
-        Suggestions.setNewRenderData(new_sequence, X, Y, YOffset);
+        int minHeightBelow = 5;
+        int spaceBelow = widgetY + widgetHeight - (textY + 7);
+
+        if (spaceBelow < minHeightBelow)
+            textY -= (minHeightBelow - spaceBelow);
+
+        Suggestions.setNewRenderData(new_sequence, X, Y, YOffset, textY, 0xFF333333);
         Suggestions.ON(false);
     }
 
@@ -77,7 +84,7 @@ public class Handlers {
         int YOffset = 5;
         int Y = widgetY + ((currentCursorLineIndex + 1) * 9);
 
-        Suggestions.setNewRenderData(new_sequence, X, Y, YOffset);
+        Suggestions.setNewRenderData(new_sequence, X, Y, YOffset, Y - 5, 0xFFaaadab);
         Suggestions.ON(true);
     }
 
@@ -112,7 +119,7 @@ public class Handlers {
         int YOffset = (lineHeight / 2) + 1;
         int Y = ((currentRow + 1) * lineHeight) + YOffset - 32;
 
-        Suggestions.setNewRenderData(new_sequence, X, Y, YOffset);
+        Suggestions.setNewRenderData(new_sequence, X, Y, YOffset, Y-4, 0xFF333333);
         Suggestions.ON(false);
     }
 }
