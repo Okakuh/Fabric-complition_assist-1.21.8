@@ -27,11 +27,4 @@ public abstract class TextFieldWidgetMixin {
             Suggestions.OFF();
         }
     }
-
-    @Inject(method = "renderWidget", at = @At("RETURN"))
-    private void complition_assist$onHudRender(DrawContext context, int mouseX, int mouseY, float deltaTicks, CallbackInfo ci) {
-        if (ComplitionAssist.isNotWorking()) return;
-        TextFieldWidget widget = (TextFieldWidget)(Object)this;
-        if (widget.isFocused()) Suggestions.tryRender(context);
-    }
 }
