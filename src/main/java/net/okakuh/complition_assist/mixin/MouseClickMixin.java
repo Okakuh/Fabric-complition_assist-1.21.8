@@ -18,7 +18,7 @@ public abstract class MouseClickMixin {
         if (ComplitionAssist.isNotWorking()) return;
         if (!Suggestions.isON()) return;
 
-        if (button == 0 && action == 1) { // Левая кнопка нажата
+        if (button == 1 && action == 1) {
             Mouse mouse = (Mouse)(Object)this;
             MinecraftClient client = MinecraftClient.getInstance();
             Window wind = client.getWindow();
