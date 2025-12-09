@@ -178,11 +178,25 @@
         }
 
         public static void onMouseClick(double mouseX, double mouseY) {
+            MinecraftClient client = MinecraftClient.getInstance();
             int extra = borderWidth + borderPadding;
+            int X1 = SUGGESTIONS_X + extra;
+            int Y1 = SUGGESTIONS_Y + extra;
+            int X2 = SUGGESTIONS_X + SUGGESTIONS_WIDTH - extra;
             int Y2 = SUGGESTIONS_Y + SUGGESTIONS_HEIGHT - extra;
 
-            if (SUGGESTIONS_X + extra > mouseX || mouseX > SUGGESTIONS_X + SUGGESTIONS_WIDTH - extra) return;
-            if (SUGGESTIONS_Y + extra > mouseY || mouseY > Y2) return;
+            // Потому что таблички говно
+            if (!shouldUseScreenDrawContext) {
+                int corX = client.currentScreen.width / 2;
+                int corY = 90;
+                X1 += corX;
+                Y1 += corY;
+                X2 += corX;
+                Y2 += corY;
+            }
+
+            if (X1 > mouseX || mouseX > X2) return;
+            if (Y1 > mouseY || mouseY > Y2) return;
 
             float OffsetFromBottom = (float) (Y2 - mouseY) / lineHeight;
 
@@ -190,7 +204,6 @@
             if (!isDisplaySuggestionsMirrored)
                 index = suggestionsForSequence.size() - (index + 1);
 
-            MinecraftClient client = MinecraftClient.getInstance();
 
             String replacement = suggestionsALL.get(suggestionsForSequence.get(index));
 
