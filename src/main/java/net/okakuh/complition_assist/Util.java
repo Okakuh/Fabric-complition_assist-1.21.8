@@ -1,18 +1,27 @@
 package net.okakuh.complition_assist;
 
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.EditBox;
 import net.okakuh.complition_assist.mixin.KeyboardAccessor;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.*;
 
 public class Util {
+    public static EditBox asdf = null;
     public static void processReplacement(MinecraftClient client, String sequence, String replacement) {
         // Симулируем Backspace для удаления двоеточия и последовательности
-        simulateBackspaces(client, sequence.length() + 1);
+//        simulateBackspaces(client, sequence.length() + 1);
 
         // Вставляем замену
-        simulateTextInput(client, replacement);
+//        simulateTextInput(client, "§" + "7" + replacement);
+        if (asdf != null) {
+            ComplitionAssist.LOGGER.info("asdf");
+            String text = asdf.getText();
+            CharSequence b = (CharSequence) (replacement);
+            String d = text.replace((CharSequence) sequence, b);
+            asdf.setText(d);
+        }
     }
 
     public static void simulateBackspaces(MinecraftClient client, int count) {

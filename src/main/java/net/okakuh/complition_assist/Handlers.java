@@ -84,6 +84,7 @@ public class Handlers {
 
         Suggestions.setNewRenderData(new_sequence, X, Y, YOffset, Y - 5, 0xFFaaadab);
         Suggestions.ON(true);
+        Util.asdf = editBox;
     }
 
     public static void SignScreenHandler(AbstractSignEditScreenAccessor accessor) {
