@@ -27,6 +27,9 @@
         private static List<String> suggestionsForSequence = new ArrayList<>();
         private static List<String> displaySuggestionsForSequence = new ArrayList<>();
 
+        private static int cursorX = 0;
+        private static int cursorY = 0;
+
         // Инфа для рендера
 
         // Позиция подсказок
@@ -35,6 +38,7 @@
         private static int SUGGESTIONS_Y = 0;
         private static int SUGGESTIONS_WIDTH = 0;
         private static int SUGGESTIONS_HEIGHT = 0;
+        private static int WIDGET_HEIGHT_OFFSET = 0;
 
         // Отступы, ширина гранцы и высота строки подсказок
         private static final int borderPadding = 2;
@@ -44,6 +48,7 @@
         // Цвета
         private static final int borderColor = 0xFFaba9a2;
         private static final int textColor = 0xFFFFFFFF;
+        private static final int inRowTextColor = 0xFF333333;
         private static final int backgroundColor = 0xB3000000;
 
         public static void add(String key, String value) {
@@ -82,7 +87,11 @@
             return keyChar;
         }
 
-        public static void setNewRenderData(String newSequence, int X, int Y, int YOffset) {
+        public static void setNewRenderData(String newSequence, int X, int Y, int widgetYOffset) {
+            cursorX = X;
+            cursorY = Y;
+            WIDGET_HEIGHT_OFFSET = widgetYOffset;
+
             sequence = newSequence;
             suggestionsForSequence = parseSuggestions(sequence, suggestionsALL);
             displaySuggestionsForSequence = parseDisplaySuggestions(suggestionsForSequence, suggestionsALL);
@@ -117,12 +126,13 @@
             int screenHeight = client.getWindow().getScaledHeight();
 
             // По высоте
-            if ((screenHeight - (SUGGESTIONS_Y + YOffset)) > SUGGESTIONS_HEIGHT) {
-                SUGGESTIONS_Y += YOffset;
+            if ((screenHeight - (SUGGESTIONS_Y + WIDGET_HEIGHT_OFFSET)) > SUGGESTIONS_HEIGHT) {
+                SUGGESTIONS_Y += WIDGET_HEIGHT_OFFSET;
                 isDisplaySuggestionsMirrored = false;
+
             } else {
                 isDisplaySuggestionsMirrored = true;
-                SUGGESTIONS_Y -= (YOffset + SUGGESTIONS_HEIGHT);
+                SUGGESTIONS_Y -= WIDGET_HEIGHT_OFFSET + SUGGESTIONS_HEIGHT;
 
                 // Отзеркаливаем список если будем рендерить подсказки сверху
                 // Чтобы первое предложение на замену было снизу
@@ -140,13 +150,27 @@
             // Рендер гриницы
             context.drawBorder(SUGGESTIONS_X, SUGGESTIONS_Y, SUGGESTIONS_WIDTH, SUGGESTIONS_HEIGHT, borderColor);
 
+
             // Стдвиг текста относительно начала рендера с учетом ширины границы и отступа от границы
             int textY = SUGGESTIONS_Y + borderPadding + borderWidth;
             int textX = SUGGESTIONS_X + borderPadding + borderWidth;
 
+            int index = 0;
+
+            if (isDisplaySuggestionsMirrored) {
+                index = displaySuggestionsForSequence.size() - 1;
+            }
+
+            String inRowSuggestion = displaySuggestionsForSequence.get(index);
+            String stripedInRowSuggestion = inRowSuggestion.substring(sequence.length());
+
+            context.drawText(client.textRenderer,
+                    stripedInRowSuggestion, cursorX + 3, cursorY - 6, inRowTextColor, true);
+
             // Рендер текста
             for (String displayText : displaySuggestionsForSequence) {
                 context.drawText(client.textRenderer, displayText, textX, textY, textColor, true);
+
                 textY += lineHeight;
             }
         }

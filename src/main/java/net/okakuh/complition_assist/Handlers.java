@@ -34,8 +34,8 @@ public class Handlers {
         if (client == null || client.textRenderer == null) return;
 
         int X = widgetX + widgetWidthBorder + client.textRenderer.getWidth(textBeforeCursor) - 3;
-        int YOffset = widgetHeight / 2 + 1;
-        int Y = widgetY + YOffset - 2;
+        int YOffset = widgetHeight / 2;
+        int Y = widgetY + YOffset;
 
         Suggestions.setNewRenderData(new_sequence, X, Y, YOffset);
         Suggestions.ON(false);
