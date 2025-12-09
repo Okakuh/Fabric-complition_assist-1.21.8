@@ -38,7 +38,6 @@
         private static int SUGGESTIONS_Y = 0;
         private static int SUGGESTIONS_WIDTH = 0;
         private static int SUGGESTIONS_HEIGHT = 0;
-        private static int WIDGET_HEIGHT_OFFSET = 0;
 
         // Отступы, ширина гранцы и высота строки подсказок
         private static final int borderPadding = 2;
@@ -90,7 +89,6 @@
         public static void setNewRenderData(String newSequence, int X, int Y, int widgetYOffset) {
             cursorX = X;
             cursorY = Y;
-            WIDGET_HEIGHT_OFFSET = widgetYOffset;
 
             sequence = newSequence;
             suggestionsForSequence = parseSuggestions(sequence, suggestionsALL);
@@ -126,13 +124,13 @@
             int screenHeight = client.getWindow().getScaledHeight();
 
             // По высоте
-            if ((screenHeight - (SUGGESTIONS_Y + WIDGET_HEIGHT_OFFSET)) > SUGGESTIONS_HEIGHT) {
-                SUGGESTIONS_Y += WIDGET_HEIGHT_OFFSET;
+            if ((screenHeight - (SUGGESTIONS_Y + widgetYOffset)) > SUGGESTIONS_HEIGHT) {
+                SUGGESTIONS_Y += widgetYOffset;
                 isDisplaySuggestionsMirrored = false;
 
             } else {
                 isDisplaySuggestionsMirrored = true;
-                SUGGESTIONS_Y -= WIDGET_HEIGHT_OFFSET + SUGGESTIONS_HEIGHT;
+                SUGGESTIONS_Y -= widgetYOffset + SUGGESTIONS_HEIGHT;
 
                 // Отзеркаливаем список если будем рендерить подсказки сверху
                 // Чтобы первое предложение на замену было снизу
