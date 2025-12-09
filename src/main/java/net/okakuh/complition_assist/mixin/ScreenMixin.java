@@ -3,6 +3,7 @@ package net.okakuh.complition_assist.mixin;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.okakuh.complition_assist.ComplitionAssist;
+import net.okakuh.complition_assist.Handler;
 import net.okakuh.complition_assist.Suggestions;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -16,6 +17,7 @@ public abstract class ScreenMixin {
     private void complition_assist$onScreenInit(CallbackInfo ci) {
         if (ComplitionAssist.isNotWorking()) return;
 
+        Handler.screenOpenedHandler();
         Suggestions.OFF();
     }
 
@@ -33,12 +35,12 @@ public abstract class ScreenMixin {
         Suggestions.OFF();
     }
 
-    @Inject(method = "render", at = @At("RETURN"))
-    private void complition_assist$onRenderOverlay(DrawContext context, int mouseX, int mouseY, float deltaTicks, CallbackInfo ci) {
-        if (ComplitionAssist.isNotWorking()) return;
-
-        if (Suggestions.isUsingScreenDrawContext()) {
-            Suggestions.tryRender(context);
-        }
-    }
+//    @Inject(method = "render", at = @At("RETURN"))
+//    private void complition_assist$onRenderOverlay(DrawContext context, int mouseX, int mouseY, float deltaTicks, CallbackInfo ci) {
+//        if (ComplitionAssist.isNotWorking()) return;
+//
+//        if (Suggestions.isUsingScreenDrawContext()) {
+//            Suggestions.tryRender(context);
+//        }
+//    }
 }

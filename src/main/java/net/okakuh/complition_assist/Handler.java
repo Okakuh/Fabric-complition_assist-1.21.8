@@ -4,6 +4,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.EditBox;
 import net.minecraft.client.gui.widget.EditBoxWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.gui.sc;
 import net.minecraft.client.util.SelectionManager;
 import net.okakuh.complition_assist.mixin.AbstractSignEditScreenAccessor;
 
@@ -11,7 +12,12 @@ import java.util.regex.*;
 
 import static net.okakuh.complition_assist.Util.parseSequence;
 
-public class Handlers {
+public class Handler {
+    public static void screenOpenedHandler() {
+
+    }
+
+
     public static void TextFieldWidgetHandler(TextFieldWidget widget) {
         String keyChar = Suggestions.getKeyChar();
         int widgetX = widget.getX();
@@ -115,4 +121,5 @@ public class Handlers {
         Suggestions.setNewRenderData(new_sequence, X, Y, YOffset);
         Suggestions.ON(false);
     }
+
 }

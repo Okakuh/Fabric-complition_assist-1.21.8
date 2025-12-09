@@ -89,7 +89,7 @@ public class ComplitionAssist implements ClientModInitializer {
                             String key = entry.getKey();
                             String value = entry.getValue().getAsString();
                             Suggestions.add(key.toLowerCase(), value);
-                            i ++;
+                            i++;
                         }
                     }
                 } catch (Exception e) {

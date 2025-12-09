@@ -4,11 +4,7 @@
   "package": "net.okakuh.complition_assist.mixin",
   "compatibilityLevel": "JAVA_21",
   "client": [
-    "TextFieldWidgetMixin",
-    "EditBoxWidgetMixin",
     "ScreenMixin",
-    "AbstractSignEditScreenMixin",
-    "AbstractSignEditScreenAccessor",
     "KeyboardMixin",
     "KeyboardAccessor",
     "MouseClickMixin"
