@@ -11,7 +11,6 @@ public class Config {
     private static final Path CONFIG_PATH = FabricLoader.getInstance().getConfigDir().resolve("complition_assist.json");
     private static Config INSTANCE;
 
-    // Единственная настройка - включение/выключение мода
     private boolean modEnabled = true;
 
     public static Config getInstance() {
@@ -63,10 +62,5 @@ public class Config {
         this.modEnabled = enabled;
         save();
         ComplitionAssist.setWorking(enabled);
-    }
-
-    // Для быстрого переключения
-    public void toggleModEnabled() {
-        setModEnabled(!modEnabled);
     }
 }

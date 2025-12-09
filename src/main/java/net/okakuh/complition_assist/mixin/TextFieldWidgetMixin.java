@@ -1,6 +1,5 @@
 package net.okakuh.complition_assist.mixin;
 
-import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.okakuh.complition_assist.ComplitionAssist;
 import net.okakuh.complition_assist.Handlers;

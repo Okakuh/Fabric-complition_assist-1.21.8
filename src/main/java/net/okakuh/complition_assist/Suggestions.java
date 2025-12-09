@@ -179,11 +179,11 @@
 
         public static void onMouseClick(double mouseX, double mouseY) {
             MinecraftClient client = MinecraftClient.getInstance();
-            int extra = borderWidth + borderPadding;
-            int X1 = SUGGESTIONS_X + extra;
-            int Y1 = SUGGESTIONS_Y + extra;
-            int X2 = SUGGESTIONS_X + SUGGESTIONS_WIDTH - extra;
-            int Y2 = SUGGESTIONS_Y + SUGGESTIONS_HEIGHT - extra;
+            int nonText = borderWidth + borderPadding;
+            int X1 = SUGGESTIONS_X + nonText;
+            int Y1 = SUGGESTIONS_Y + nonText;
+            int X2 = SUGGESTIONS_X + SUGGESTIONS_WIDTH - nonText;
+            int Y2 = SUGGESTIONS_Y + SUGGESTIONS_HEIGHT - nonText;
 
             // Потому что таблички говно
             if (!shouldUseScreenDrawContext) {

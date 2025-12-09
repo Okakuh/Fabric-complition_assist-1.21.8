@@ -75,10 +75,8 @@ public class Handlers {
         var client = MinecraftClient.getInstance();
         if (client == null || client.textRenderer == null) return;
 
-        // Высчитываем позицию курсора
         int widgetX = widget.getX();
         int widgetY = widget.getY();
-
 
         int X = widgetX + client.textRenderer.getWidth(textBeforeCursor) + 1;
         int YOffset = 5;

@@ -96,7 +96,7 @@ public class ComplitionAssist implements ClientModInitializer {
                     LOGGER.error("Error loading shortcuts from {}", resource.getPack(), e);
                 }
                 if (i > 0) {
-                    LOGGER.info("Loaded {} suggestions from resource pack: {}", i, resource.getPackId());
+                    LOGGER.info("Loaded {} suggestions from resource pack: {}", i, resource.getPack().getId());
                 }
             }
         } catch (Exception e) {
