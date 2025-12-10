@@ -7,10 +7,7 @@
     "TextFieldWidgetMixin",
     "EditBoxWidgetMixin",
     "ScreenMixin",
-    "AbstractSignEditScreenMixin",
-    "AbstractSignEditScreenAccessor",
     "KeyboardMixin",
-    "KeyboardAccessor",
     "MouseClickMixin"
   ],
   "injectors": {

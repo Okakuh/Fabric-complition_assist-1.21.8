@@ -4,7 +4,6 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.Mouse;
 import net.minecraft.client.util.Window;
 import net.okakuh.complition_assist.ComplitionAssist;
-import net.okakuh.complition_assist.Suggestions;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -16,13 +15,13 @@ public abstract class MouseClickMixin {
     @Inject(method = "onMouseButton", at = @At("HEAD"))
     private void onMouseButton(long window, int button, int action, int mods, CallbackInfo ci) {
         if (ComplitionAssist.isNotWorking()) return;
-        if (!Suggestions.isON()) return;
+        if (!ComplitionAssist.suggesting) return;
 
         if (button == 1 && action == 1) {
             Mouse mouse = (Mouse)(Object)this;
             MinecraftClient client = MinecraftClient.getInstance();
             Window wind = client.getWindow();
-            Suggestions.onMouseClick(mouse.getScaledX(wind), mouse.getScaledY(wind));
+            ComplitionAssist.onMouseClick(mouse.getScaledX(wind), mouse.getScaledY(wind));
         }
     }
 }
