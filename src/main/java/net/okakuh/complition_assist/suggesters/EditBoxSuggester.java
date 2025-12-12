@@ -15,15 +15,16 @@ import static net.okakuh.complition_assist.Util.*;
 public class EditBoxSuggester {
     private final EditBoxWidget widget;
     private final EditBox editBox;
-    private RenderData renderData = new RenderData();
+    private final RenderData renderData = new RenderData();
 
     public EditBoxSuggester(EditBoxWidget widget, EditBox editbox) {
         this.widget = widget;
         this.editBox = editbox;
+        this.editBox.setChangeListener(this::onChanged);
         this.renderData.inRowSuggestionColor = 0xFFaaadab;
     }
 
-    public void onChanged() {
+    private void onChanged(String s) {
         String keyChar = ComplitionAssist.getKeyChar();
 
         int currentCursorLineIndex = editBox.getCurrentLineIndex();
@@ -58,10 +59,10 @@ public class EditBoxSuggester {
         int Y = widgetY + ((currentCursorLineIndex + 1) * 9);
 
         this.renderData.sequence = new_sequence;
-        this.renderData.cursorX = X;
-        this.renderData.cursorY = Y;
-        this.renderData.yOffset = YOffset;
-        this.renderData.sTextY = Y - 5;
+        this.renderData.textCursorX = X;
+        this.renderData.textCursorY = Y;
+        this.renderData.suggestions_Y_offset = YOffset;
+        this.renderData.suggestionInRowY = Y - 5;
 
         Map<String, String> suggestionsALL = ComplitionAssist.getSuggestions();
 
@@ -73,7 +74,7 @@ public class EditBoxSuggester {
             return;
         }
 
-        ComplitionAssist.parseNewRenderData(this.renderData);
+        ComplitionAssist.setNewRenderData(this.renderData);
         ComplitionAssist.setNewReplacer(this::replacer);
         ComplitionAssist.setSuggesting(true);
     }

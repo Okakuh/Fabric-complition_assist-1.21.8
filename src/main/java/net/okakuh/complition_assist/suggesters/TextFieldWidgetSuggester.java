@@ -16,7 +16,7 @@ public class TextFieldWidgetSuggester {
     public TextFieldWidgetSuggester(TextFieldWidget widget) {
         this.widget = widget;
         widget.setChangedListener(this::onChanged);
-        this.renderData.inRowSuggestionColor = 0xFF333333;
+        this.renderData.inRowSuggestionColor = 0xFFa32121;
     }
 
     private void onChanged(String s) {
@@ -43,31 +43,34 @@ public class TextFieldWidgetSuggester {
         int X = widgetX + widgetWidthBorder + client.textRenderer.getWidth(textBeforeCursor) - 3;
         int YOffset = widgetHeight / 2;
         int Y = widgetY + YOffset;
-        int textY = widgetY + (int) Math.floor((double) (widgetHeight - 7) / 2);
 
-        int minHeightBelow = 5;
-        int spaceBelow = widgetY + widgetHeight - (textY + 7);
+        int textHeight = 7;
+        int suggestionInRowY = widgetY + (int) Math.floor((double) (widgetHeight - textHeight) / 2);
 
-        if (spaceBelow < minHeightBelow)
-            textY -= (minHeightBelow - spaceBelow);
+        int minHeightBelowText = 5;
+        int spaceBelow = widgetY + widgetHeight - (suggestionInRowY + 7);
+
+        if (spaceBelow < minHeightBelowText)
+            suggestionInRowY -= (minHeightBelowText - spaceBelow);
 
         this.renderData.sequence = new_sequence;
-        this.renderData.cursorX = X;
-        this.renderData.cursorY = Y;
-        this.renderData.yOffset = YOffset;
-        this.renderData.sTextY = textY;
+        this.renderData.textCursorX = X;
+        this.renderData.textCursorY = Y;
+        this.renderData.suggestions_Y_offset = YOffset;
+        this.renderData.suggestionInRowY = suggestionInRowY;
 
         Map<String, String> suggestionsALL = ComplitionAssist.getSuggestions();
 
         this.renderData.suggestionsForSequence = parseSuggestions(new_sequence, suggestionsALL);
-        this.renderData.displaySuggestionsForSequence = parseDisplaySuggestions(this.renderData.suggestionsForSequence, suggestionsALL);
+        this.renderData.displaySuggestionsForSequence = parseDisplaySuggestions(this.renderData.suggestionsForSequence,
+                suggestionsALL);
 
         if (this.renderData.displaySuggestionsForSequence.isEmpty()) {
             ComplitionAssist.setSuggesting(false);
             return;
         }
 
-        ComplitionAssist.parseNewRenderData(this.renderData);
+        ComplitionAssist.setNewRenderData(this.renderData);
         ComplitionAssist.setNewReplacer(this::replacer);
         ComplitionAssist.setSuggesting(true);
     }

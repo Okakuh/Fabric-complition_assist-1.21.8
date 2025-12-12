@@ -26,8 +26,6 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
 
-import static net.okakuh.complition_assist.Util.*;
-
 public class ComplitionAssist implements ClientModInitializer {
     public static final String MOD_ID = "complition_assist";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
@@ -124,13 +122,9 @@ public class ComplitionAssist implements ClientModInitializer {
         }
     }
 
-    public static boolean isNotWorking() {
-        return !WORKING ;
-    }
+    public static boolean isNotWorking() {return !WORKING ;}
 
-    public static void setWorking(boolean working) {
-        WORKING = working;
-    }
+    public static void setWorking(boolean working) {WORKING = working;}
 
     public static String getKeyChar() {
         return keyChar;
@@ -144,17 +138,17 @@ public class ComplitionAssist implements ClientModInitializer {
         return lineHeight;
     }
 
-    public static void parseNewRenderData(RenderData renderDat) {
+    public static void setNewRenderData(RenderData renderDat) {
         renderData = renderDat;
         // Координата Х для рендера подсказок
-        SUGGESTIONS_X = renderData.cursorX;
+        SUGGESTIONS_X = renderData.textCursorX;
         // Координата У для рендера подсказок
-        SUGGESTIONS_Y = renderData.cursorY;
+        SUGGESTIONS_Y = renderData.textCursorY;
 
         // Определение высоты и ширины с фоном и границей
         // Высота
         int suggestionCount = renderData.displaySuggestionsForSequence.size();
-        int suggestionsHeight = suggestionCount * ComplitionAssist.getLineHeight();
+        int suggestionsHeight = suggestionCount * lineHeight;
 
         // Ширина
         var client = MinecraftClient.getInstance();
@@ -176,13 +170,13 @@ public class ComplitionAssist implements ClientModInitializer {
         int screenHeight = client.getWindow().getScaledHeight();
 
         // По высоте
-        if ((screenHeight - (SUGGESTIONS_Y + renderData.yOffset)) > SUGGESTIONS_HEIGHT) {
-            SUGGESTIONS_Y += renderData.yOffset;
+        if ((screenHeight - (SUGGESTIONS_Y + renderData.suggestions_Y_offset)) > SUGGESTIONS_HEIGHT) {
+            SUGGESTIONS_Y += renderData.suggestions_Y_offset;
             isDisplaySuggestionsMirrored = false;
 
         } else {
             isDisplaySuggestionsMirrored = true;
-            SUGGESTIONS_Y -= renderData.yOffset + SUGGESTIONS_HEIGHT;
+            SUGGESTIONS_Y -= renderData.suggestions_Y_offset + SUGGESTIONS_HEIGHT;
 
             // Отзеркаливаем список если будем рендерить подсказки сверху
             // Чтобы первое предложение на замену было снизу
@@ -216,8 +210,9 @@ public class ComplitionAssist implements ClientModInitializer {
         String inRowSuggestion = renderData.suggestionsForSequence.getFirst();
         String stripedInRowSuggestion = inRowSuggestion.substring(renderData.sequence.length());
 
-        context.drawText(client.textRenderer,
-                stripedInRowSuggestion, renderData.cursorX + 3, renderData.sTextY, renderData.inRowSuggestionColor, false);
+        context.drawText(client.textRenderer, stripedInRowSuggestion,
+                renderData.textCursorX + 3, renderData.suggestionInRowY,
+                renderData.inRowSuggestionColor, false);
 
         // Рендер текста
         for (String displayText : renderData.displaySuggestionsForSequence) {

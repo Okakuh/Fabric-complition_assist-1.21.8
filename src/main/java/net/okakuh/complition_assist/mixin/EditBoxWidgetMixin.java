@@ -15,39 +15,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class EditBoxWidgetMixin {
     @Unique
     private boolean initialized = false;
-    @Unique
-    private EditBoxSuggester d;
-
     @Shadow
     private EditBox editBox;
-
-    @Inject(method = "setText(Ljava/lang/String;Z)V", at = @At("TAIL"))
-    private void onTextChanged(String text, boolean allowOverflow, CallbackInfo ci) {
-        if (ComplitionAssist.isNotWorking()) return;
-        EditBoxWidget widget = (EditBoxWidget)(Object)this;
-
-        if (widget.isFocused() && this.editBox != null) {
-            if (!initialized) {
-                initialized = true;
-                d = new EditBoxSuggester(widget, this.editBox);
-            }
-            d.onChanged();
-        }
-    }
-
-    @Inject(method = "onCursorChange()V", at = @At("TAIL"))
-    private void onCursorChange(CallbackInfo ci) {
-        if (ComplitionAssist.isNotWorking()) return;
-        EditBoxWidget widget = (EditBoxWidget)(Object)this;
-
-        if (widget.isFocused() && this.editBox != null) {
-            if (!initialized) {
-                initialized = true;
-                d = new EditBoxSuggester(widget, this.editBox);
-            }
-            d.onChanged();
-        }
-    }
 
     // Ловим изменение фокуса
     @Inject(method = "setFocused", at = @At("TAIL"))
@@ -58,9 +27,8 @@ public abstract class EditBoxWidgetMixin {
         if (focused && this.editBox != null) {
             if (!initialized) {
                 initialized = true;
-                d = new EditBoxSuggester(widget, this.editBox);
+                new EditBoxSuggester(widget, this.editBox);
             }
-            d.onChanged();
         }
     }
 }
