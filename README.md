@@ -3,6 +3,9 @@
 Клиентский мод для Майнкарфт 1.21.8 для показа подсказок и кастомной автозамены.
 
 <img width="485" height="333" alt="image" src="https://github.com/user-attachments/assets/ea43dade-021f-4b77-94c0-f59ecab799a6" />
+<img width="485" height="434" alt="image" src="https://github.com/user-attachments/assets/c1cb85ee-8e86-4b66-8b17-6f3521327af9" />
+
+
 
 ## Функции
 - **Работает почти во всех полях ввода**: Текстовые поля, Чат, Наковальня, Книжка, Поиск в инвенратре, (Везде где используеться TextFieldWidget)
